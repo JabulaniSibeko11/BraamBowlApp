@@ -1,0 +1,78 @@
+﻿/* managenav.css */
+.nav-pills {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+    .nav-pills .nav-item {
+        margin-bottom: 10px;
+    }
+
+    .nav-pills .nav-link {
+        color: #2c3e50;
+        font-size: 1.1rem;
+        font-weight: 500;
+        padding: 10px 20px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+        .nav-pills .nav-link:hover {
+            background-color: #e8f5e9;
+            color: #28a745;
+            transform: translateX(5px);
+        }
+
+        .nav-pills .nav-link.active {
+            background-color: #28a745;
+            color: white;
+            font-weight: 600;
+        }
+
+        .nav-pills .nav-link::before {
+            content: '🥗';
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+
+        .nav-pills .nav-link#profile::before {
+            content: '👤';
+        }
+
+        .nav-pills .nav-link#email::before {
+            content: '📧';
+        }
+
+        .nav-pills .nav-link#change-password::before {
+            content: '🔒';
+        }
+
+        .nav-pills .nav-link#external-login::before {
+            content: '🔗';
+        }
+
+        .nav-pills .nav-link#two-factor::before {
+            content: '🔐';
+        }
+
+        .nav-pills .nav-link#personal-data::before {
+            content: '📋';
+        }
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .nav-pills {
+        padding: 10px;
+    }
+
+        .nav-pills .nav-link {
+            font-size: 1rem;
+            padding: 8px 15px;
+        }
+}

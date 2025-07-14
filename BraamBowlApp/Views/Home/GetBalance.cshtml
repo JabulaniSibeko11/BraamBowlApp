@@ -1,0 +1,11 @@
+﻿@{
+    ViewData["Title"] = "Account Balance";
+}
+
+<h2>Account Balance</h2>
+
+<p>Your Employee ID: <strong>@ViewBag.EmployeeId</strong></p>
+<p>Your current cafeteria account balance is: <strong>R @ViewBag.Balance</strong></p>
+
+<a asp-action="Deposit" class="btn btn-primary">Make a Deposit</a>
+

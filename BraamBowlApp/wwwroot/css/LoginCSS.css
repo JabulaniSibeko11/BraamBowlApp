@@ -1,0 +1,147 @@
+﻿
+        :root {
+            --primary-green: #2ECC71;
+            --secondary-orange: #F39C12;
+            --accent-yellow: #F1C40F;
+            --neutral-white: #FFFFFF;
+            --dark-gray: #2C3E50;
+            --dark-theme-bg: #34495E;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--neutral-white);
+            color: var(--dark-gray);
+        }
+
+        h1 {
+            font-weight: 600;
+            color: var(--dark-gray);
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .form-floating label {
+            color: var(--dark-gray);
+            font-weight: 500;
+        }
+
+        .form-control, .form-check-input {
+            border: 1px solid var(--dark-gray);
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus, .form-check-input:focus {
+            border-color: var(--primary-green);
+            box-shadow: 0 0 5px rgba(46, 204, 113, 0.5);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-green);
+            border-color: var(--primary-green);
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            border-radius: 8px;
+            padding: 0.75rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: #27AE60;
+            border-color: #27AE60;
+        }
+
+        .text-danger {
+            color: var(--accent-yellow) !important;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+        }
+
+        .card {
+            background-color: var(--neutral-white);
+            border: 1px solid var(--dark-gray);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+
+        .emoji {
+            font-size: 1.2rem;
+            margin-right: 0.5rem;
+        }
+
+        .success-message {
+            background-color: var(--primary-green);
+            color: var(--neutral-white);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .text-primary {
+            color: var(--secondary-orange) !important;
+        }
+
+        .text-primary:hover {
+            color: #E67E22 !important;
+        }
+
+        /* Dark Theme */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: var(--dark-theme-bg);
+                color: var(--neutral-white);
+            }
+
+            h1, .form-floating label, .form-check-label {
+                color: var(--neutral-white);
+            }
+
+            .form-control, .form-check-input {
+                background-color: #4A6076;
+                color: var(--neutral-white);
+                border-color: var(--neutral-white);
+            }
+
+            .form-control:focus, .form-check-input:focus {
+                border-color: var(--primary-green);
+                box-shadow: 0 0 5px rgba(46, 204, 113, 0.5);
+            }
+
+            .card {
+                background-color: #4A6076;
+                border-color: var(--neutral-white);
+            }
+
+            .text-danger {
+                color: var(--accent-yellow) !important;
+            }
+        }
+
+        /* Button Animation */
+        .btn-primary {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.5s ease, height 0.5s ease;
+        }
+
+        .btn-primary:hover::after {
+            width: 200%;
+            height: 200%;
+        }
+    

@@ -1,0 +1,60 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Profile";
+    ViewData["ActivePage"] = ManageNavPages.Index;
+}
+<link href="~/css/profile.css" rel="stylesheet" />
+<h3>@ViewData["Title"]</h3>
+<partial name="_StatusMessage" for="StatusMessage" />
+<div class="row">
+    <div class="col-md-6">
+        <form id="profile-form" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+            <div class="form-floating mb-3">
+                <input asp-for="Username" class="form-control" placeholder="Please choose your username." disabled />
+                <label asp-for="Username" class="form-label">👤 Username</label>
+            </div>
+            <div class="form-floating mb-3">
+                <input asp-for="Input.Employee_ID" class="form-control" placeholder="Please enter your SAP number." aria-required="true" />
+                <label asp-for="Input.Employee_ID" class="form-label">🏷️ SAP Number</label>
+                <span asp-validation-for="Input.Employee_ID" class="text-danger"></span>
+            </div>
+            <div class="form-floating mb-3">
+                <input asp-for="Input.Street_Address" class="form-control" placeholder="Please enter your street address." aria-required="true" />
+                <label asp-for="Input.Street_Address" class="form-label">🏠 Street Address</label>
+                <span asp-validation-for="Input.Street_Address" class="text-danger"></span>
+            </div>
+            <div class="form-floating mb-3">
+                <select asp-for="Input.City" class="form-control" placeholder="Please select your city.">
+                    <option value="">Select a city</option>
+                    <option value="Braamfontein">Braamfontein</option>
+                    <option value="Johannesburg">Johannesburg</option>
+                    <option value="Newtown">Newtown</option>
+                </select>
+                <label asp-for="Input.City" class="form-label">🌆 City</label>
+                <span asp-validation-for="Input.City" class="text-danger"></span>
+            </div>
+            <div class="form-floating mb-3">
+                <input asp-for="Input.Postal_Code" class="form-control" placeholder="Please enter your postal code." />
+                <label asp-for="Input.Postal_Code" class="form-label">📬 Postal Code</label>
+                <span asp-validation-for="Input.Postal_Code" class="text-danger"></span>
+            </div>
+            <div class="form-floating mb-3">
+                <input asp-for="Input.Region" class="form-control" placeholder="Please enter your region." />
+                <label asp-for="Input.Region" class="form-label">🌍 Region</label>
+                <span asp-validation-for="Input.Region" class="text-danger"></span>
+            </div>
+            <div class="form-floating mb-3">
+                <input asp-for="Input.PhoneNumber" class="form-control" placeholder="Please enter your phone number." />
+                <label asp-for="Input.PhoneNumber" class="form-label">📱 Phone Number</label>
+                <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
+            </div>
+            <button id="update-profile-button" type="submit" class="w-100 btn btn-lg btn-primary">✅ Save</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

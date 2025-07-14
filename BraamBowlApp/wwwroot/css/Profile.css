@@ -1,0 +1,112 @@
+﻿
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f8f9fa;
+}
+
+h3 {
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    font-size: 2rem;
+    text-align: center;
+}
+
+#profile-form {
+    background-color: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.form-floating {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+    .form-floating input.form-control {
+        border: 2px solid #e8f5e9;
+        border-radius: 8px;
+        padding: 10px 15px;
+        font-size: 1.1rem;
+        height: 50px;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+        .form-floating input.form-control:focus {
+            border-color: #28a745;
+            box-shadow: 0 0 5px rgba(40, 167, 69, 0.3);
+            outline: none;
+        }
+
+        .form-floating input.form-control:disabled {
+            background-color: #f1f3f5;
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+
+    .form-floating label {
+        color: #2c3e50;
+        font-weight: 500;
+        padding: 10px 15px;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+    }
+
+        .form-floating label::before {
+            content: '📱';
+            margin-right: 8px;
+            font-size: 1.2rem;
+        }
+
+    .form-floating input[asp-for="Username"] + label::before {
+        content: '👤';
+    }
+
+.text-danger {
+    font-size: 0.9rem;
+    margin-top: 5px;
+    display: block;
+}
+
+#update-profile-button {
+    background-color: #28a745;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    padding: 12px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+    #update-profile-button:hover {
+        background-color: #218838;
+        transform: translateY(-2px);
+    }
+
+    #update-profile-button::before {
+        content: '✅';
+        margin-right: 8px;
+    }
+
+
+@media (max-width: 576px) {
+    h3 {
+        font-size: 1.5rem;
+    }
+
+    #profile-form {
+        padding: 15px;
+    }
+
+    .form-floating input.form-control {
+        font-size: 1rem;
+        height: 45px;
+    }
+
+    #update-profile-button {
+        font-size: 1rem;
+        padding: 10px;
+    }
+}
