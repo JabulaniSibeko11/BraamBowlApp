@@ -1,0 +1,77 @@
+﻿@model Order
+
+@{
+    ViewBag.Title = "Order Confirmation";
+    var orderItems = ViewBag.OrderItems as List<OrderItem>;
+    var shopName = ViewBag.ShopName as string;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation</title>
+    <link href="~/css/confirmation.css" rel="stylesheet" />
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✅ Order Confirmed!</h1>
+            <p class="shop-name">@shopName</p>
+        </div>
+
+        <div class="confirmation-content">
+            <div class="order-details">
+                <h2>Order Details</h2>
+                <div class="order-info">
+                    <p><strong>Order ID:</strong> #@Model.Order_ID</p>
+                    <p><strong>Order Date:</strong> @Model.Order_Date.ToString("yyyy-MM-dd HH:mm")</p>
+                    <p><strong>Status:</strong> <span class="status-@Model.Status.ToLower()">@Model.Status</span></p>
+                    <p><strong>Total Amount:</strong> R@Model.TotalAmount.ToString("F2")</p>
+                </div>
+            </div>
+
+            <div class="order-items">
+                <h2>Items Ordered</h2>
+                @if (orderItems != null)
+                {
+                    @foreach (var item in orderItems)
+                    {
+                        <div class="order-item">
+                            <div class="item-details">
+                                <h3>@item.Menu_Item_Name</h3>
+                                <p>Quantity: @item.Quantity</p>
+                                <p>Unit Price: R@item.UnitPriceAtTimeOfOrder.ToString("F2")</p>
+                            </div>
+                            <div class="item-total">
+                                R@item.TotalPrice.ToString("F2")
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+
+            <div class="actions">
+                <a href="/Restaurants" class="btn btn-primary">🏪 Back to Restaurants</a>
+                <a href="/Menu/@Model.Shop_ID" class="btn btn-secondary">📋 Order Again</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Clear the cart from session storage
+        sessionStorage.removeItem('cart');
+
+        // Show success message if available
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <text>
+                document.addEventListener('DOMContentLoaded', function () {
+                    alert('@TempData["SuccessMessage"]');
+                });
+            </text>
+        }
+    </script>
+</body>
+</html>

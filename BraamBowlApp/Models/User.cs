@@ -31,5 +31,7 @@ namespace BraamBowlApp.Models
         public DateTime? Last_Deposit_Month { get; set; }
 
     public decimal Monthly_Deposit_Total { get; set; }
-}
+
+        public bool? HasSeenWelcomeModal { get; set; }
+    }
 }

@@ -1,0 +1,339 @@
+﻿@model OrderModel
+
+@{
+    ViewBag.Title = "Restaurant Menu";
+    var shopId = ViewBag.ShopId;
+    var shopName = ViewBag.ShopName;
+    var categories = ViewBag.Categories as List<string> ?? new List<string>();
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@shopName Menu</title>
+    <link href="~/css/menucss.css" rel="stylesheet" />
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="restaurant-title">🍽️ @shopName Menu</h1>
+            <p class="restaurant-subtitle">Finger Lickin' Good - Braamfontein</p>
+            <a href="/Restaurants" class="back-btn">← Back to Restaurants</a>
+        </div>
+
+        @if (categories.Any())
+        {
+            <div class="menu-categories">
+                @foreach (var category in categories)
+                {
+                    var categoryId = category.ToLower().Replace(" ", "-");
+                    var isActive = category == categories.First() ? "active" : "";
+                    <button class="category-btn @isActive" data-category="@categoryId">
+                        @switch (category)
+                        {
+                            case "Burgers":
+                                <text>🍔 Burgers</text>
+                                break;
+                            case "Chicken":
+                                <text>🍗 Chicken</text>
+                                break;
+                            case "Sides":
+                                <text>🍟 Sides</text>
+                                break;
+                            case "Desserts":
+                                <text>🍰 Desserts</text>
+                                break;
+                            case "Drinks":
+                                <text>🥤 Drinks</text>
+                                break;
+                            default:
+                                <text>@category</text>
+                                break;
+                        }
+                    </button>
+                }
+            </div>
+
+            @foreach (var category in categories)
+            {
+                var categoryId = category.ToLower().Replace(" ", "-");
+                var isActive = category == categories.First() ? "active" : "";
+                <div id="@categoryId" class="menu-section @isActive">
+                    <div class="menu-grid">
+                        @foreach (var item in Model.Items.Where(i => i.Category == category))
+                        {
+                            <div class="menu-item">
+                                <div class="item-header">
+                                    <div>
+                                        <h3 class="item-name">@item.Name</h3>
+                                        <div class="item-details">
+                                            @if (!string.IsNullOrEmpty(item.Tags))
+                                            {
+                                                foreach (var tag in item.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                                                {
+                                                    <span class="item-tag">@tag.Trim()</span>
+                                                }
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="item-price">R @item.Price.ToString("F2")</div>
+                                </div>
+                                @if (!string.IsNullOrEmpty(item.Description))
+                                {
+                                    <p class="item-description">@item.Description</p>
+                                }
+                                <button class="add-to-cart" data-item-name="@item.Name" data-item-price="@item.Price" data-item-id="@item.MenuItemId">Add to Cart</button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <p>No menu items available for this restaurant.</p>
+        }
+
+        <div class="cart-summary" id="cartSummary">
+            <span class="cart-icon">🛒</span>
+            <span id="cartCount">0</span> items - R<span id="cartTotal">0.00</span>
+        </div>
+    </div>
+
+    <script>
+        // Updated JavaScript for the menu page
+        let cart = JSON.parse(sessionStorage.getItem('cart')) || [];
+        let cartTotal = cart.reduce((sum, item) => sum + item.price, 0);
+        const shopId = @shopId;
+
+        // Initialize cart summary on page load
+        updateCartSummary();
+
+        // Check if cart should be cleared (from TempData)
+        @if (TempData["ClearCart"] != null)
+        {
+            <text>
+                sessionStorage.removeItem('cart');
+            cart = [];
+            cartTotal = 0;
+            updateCartSummary();
+            </text>
+        }
+
+            // Handle category button clicks
+            document.querySelectorAll('.category-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    const categoryId = button.getAttribute('data-category');
+                    showCategory(categoryId);
+                });
+            });
+
+        // Handle add-to-cart button clicks
+        document.querySelectorAll('.add-to-cart').forEach(button => {
+            button.addEventListener('click', () => {
+                const itemName = button.getAttribute('data-item-name');
+                const price = parseFloat(button.getAttribute('data-item-price'));
+                const menuItemId = parseInt(button.getAttribute('data-item-id'));
+                addToCart(itemName, price, menuItemId);
+            });
+        });
+
+        function showCategory(categoryId) {
+            document.querySelectorAll('.menu-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(categoryId).classList.add('active');
+
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('data-category') === categoryId) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        function addToCart(itemName, price, menuItemId) {
+            const cartItem = {
+                name: itemName,
+                price: price,
+                menuItemId: menuItemId
+            };
+
+            cart.push(cartItem);
+            cartTotal += price;
+            sessionStorage.setItem('cart', JSON.stringify(cart));
+            updateCartSummary();
+
+            // Visual feedback
+            const button = event.target;
+            const originalText = button.textContent;
+            const originalBackground = button.style.background;
+
+            button.textContent = 'Added! ✓';
+            button.style.background = 'linear-gradient(45deg, #27ae60, #2ecc71)';
+            button.disabled = true;
+
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.style.background = originalBackground;
+                button.disabled = false;
+            }, 1000);
+        }
+
+        function updateCartSummary() {
+            const cartSummary = document.getElementById('cartSummary');
+            const cartCount = document.getElementById('cartCount');
+            const cartTotalElement = document.getElementById('cartTotal');
+
+            cartCount.textContent = cart.length;
+            cartTotalElement.textContent = cartTotal.toFixed(2);
+
+            cartSummary.classList.toggle('show', cart.length > 0);
+        }
+
+        // Handle cart summary click to go to checkout
+        document.getElementById('cartSummary').addEventListener('click', () => {
+            if (cart.length > 0) {
+                // Show loading state
+                const cartSummary = document.getElementById('cartSummary');
+                cartSummary.innerHTML = '<span class="cart-icon">⏳</span> Processing...';
+
+
+
+                // Create a form dynamically to submit cart data
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/Checkout/${shopId}`;
+
+                // Add cart items as hidden inputs
+                cart.forEach(item => {
+                    const itemInput = document.createElement('input');
+                    itemInput.type = 'hidden';
+                    itemInput.name = 'cartItems';
+                    itemInput.value = JSON.stringify({
+                        name: item.name,
+                        price: item.price,
+                        menuItemId: item.menuItemId
+                    });
+                    form.appendChild(itemInput);
+                });
+
+                // Add shopId
+                const shopIdInput = document.createElement('input');
+                shopIdInput.type = 'hidden';
+                shopIdInput.name = 'shopId';
+                shopIdInput.value = shopId;
+                form.appendChild(shopIdInput);
+
+                // Add anti-forgery token if using
+                const token = document.querySelector('input[name="__RequestVerificationToken"]');
+                if (token) {
+                    const tokenInput = document.createElement('input');
+                    tokenInput.type = 'hidden';
+                    tokenInput.name = '__RequestVerificationToken';
+                    tokenInput.value = token.value;
+                    form.appendChild(tokenInput);
+                }
+
+                document.body.appendChild(form);
+                form.submit();
+            } else {
+                alert('Your cart is empty. Please add some items before proceeding to checkout.');
+            }
+        });
+
+        // Add item quantity management (optional enhancement)
+        function removeFromCart(index) {
+            if (index >= 0 && index < cart.length) {
+                cartTotal -= cart[index].price;
+                cart.splice(index, 1);
+                sessionStorage.setItem('cart', JSON.stringify(cart));
+                updateCartSummary();
+            }
+        }
+
+        function clearCart() {
+            cart = [];
+            cartTotal = 0;
+            sessionStorage.removeItem('cart');
+            updateCartSummary();
+        }
+
+        // Add cart management buttons (you can add these to your HTML if needed)
+        function addCartManagementButtons() {
+            const cartSummary = document.getElementById('cartSummary');
+
+            // Add clear cart button
+            const clearButton = document.createElement('button');
+            clearButton.textContent = '🗑️';
+            clearButton.title = 'Clear Cart';
+            clearButton.style.cssText = `
+                position: absolute;
+                top: 5px;
+                right: 5px;
+                background: #e74c3c;
+                color: white;
+                border: none;
+                border-radius: 50%;
+                width: 25px;
+                height: 25px;
+                font-size: 12px;
+                cursor: pointer;
+                display: none;
+            `;
+
+            clearButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (confirm('Are you sure you want to clear your cart?')) {
+                    clearCart();
+                }
+            });
+
+            cartSummary.appendChild(clearButton);
+
+            // Show/hide clear button based on cart state
+            const originalUpdateCartSummary = updateCartSummary;
+            updateCartSummary = function () {
+                originalUpdateCartSummary();
+                clearButton.style.display = cart.length > 0 ? 'block' : 'none';
+            };
+        }
+
+        // Call this function after DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            addCartManagementButtons();
+        });
+
+        // Handle browser back button
+        window.addEventListener('pageshow', (event) => {
+            if (event.persisted) {
+                // Page was loaded from cache, refresh cart state
+                cart = JSON.parse(sessionStorage.getItem('cart')) || [];
+                cartTotal = cart.reduce((sum, item) => sum + item.price, 0);
+                updateCartSummary();
+            }
+        });
+
+        // Add keyboard shortcuts (optional)
+        document.addEventListener('keydown', (e) => {
+            // Press 'C' to clear cart
+            if (e.key === 'c' || e.key === 'C') {
+                if (e.ctrlKey && cart.length > 0) {
+                    e.preventDefault();
+                    if (confirm('Clear cart? (Ctrl+C)')) {
+                        clearCart();
+                    }
+                }
+            }
+
+            // Press 'Enter' to go to checkout
+            if (e.key === 'Enter' && e.ctrlKey && cart.length > 0) {
+                e.preventDefault();
+                document.getElementById('cartSummary').click();
+            }
+        });
+    </script>
+</body>
+</html>

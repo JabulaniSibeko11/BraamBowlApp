@@ -1,0 +1,72 @@
+﻿@model List<Shop>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choose Your Favorite Restaurant</title>
+    <link href="~/css/restuarantscss.css" rel="stylesheet" />
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍽️ Choose Your Favorite Restaurant</h1>
+            <p>Discover amazing flavors from South Africa's best restaurants</p>
+        </div>
+
+        @if (Model != null && Model.Any())
+        {
+            <div class="restaurants-grid">
+                @foreach (var restaurant in Model)
+                {
+                    <div class="restaurant-card" onclick="selectRestaurant('@restaurant.Shop_Name')">
+                        <div class="restaurant-icon">🍽️</div>
+                        <h3 class="restaurant-name">@restaurant.Shop_Name</h3>
+                        <div class="restaurant-info">
+                            <div class="restaurant-contact">
+                                <span>📍 @restaurant.Address</span>
+                                <span>📞 @restaurant.Contact_Number</span>
+                                @if (!string.IsNullOrEmpty(restaurant.Email))
+                                {
+                                    <span>✉️ @restaurant.Email</span>
+                                }
+                            </div>
+                        </div>
+                        <a href="@Url.Action("Menu", "Home", new { id = restaurant.Shop_ID })" class="order-btn">Order Now</a>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="no-restaurants">
+                <p>No restaurants available at the moment.</p>
+            </div>
+        }
+    </div>
+
+    <script>
+        function selectRestaurant(restaurantName) {
+            // Add a subtle animation when card is clicked
+            event.currentTarget.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                event.currentTarget.style.transform = 'translateY(-10px)';
+            }, 100);
+            
+            console.log('Selected restaurant:', restaurantName);
+        }
+
+        // Add some interactive hover effects
+        document.querySelectorAll('.restaurant-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-10px) scale(1.02)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+    </script>
+</body>
+</html>

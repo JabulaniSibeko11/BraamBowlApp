@@ -21,8 +21,17 @@ namespace BraamBowlApp.Models
         public virtual ICollection<MenuItem> OrderedItems { get; set; }
 
         public int Shop_ID { get; set; }
+        public string? Shop_Name { get; set; }
+
+        public string? Item_Name { get; set; }
+
         public virtual Shop Shop { get; set; }
 
         public virtual Delivery Delivery { get; set; }
+
+        public decimal Amount { get; set; }
+
+        public DateTime Payment_Date { get; set; }
+
     }
 }

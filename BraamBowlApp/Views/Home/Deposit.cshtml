@@ -1,0 +1,153 @@
+﻿@model BraamBowlApp.Models.DepositModel
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="~/css/Dashboard.css" rel="stylesheet" />
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Match dashboard background */
+            min-height: 100vh;
+        }
+
+        .deposit-container {
+            max-width: 600px; /* Smaller width for deposit form */
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95); /* Match dashboard card */
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px); /* Match dashboard blur */
+        }
+
+        .deposit-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+            .deposit-title::before {
+                content: '';
+                width: 4px;
+                height: 24px;
+                background: linear-gradient(135deg, #667eea, #764ba2); /* Match section-title */
+                border-radius: 2px;
+            }
+
+        .deposit-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+            .form-group label {
+                font-weight: 500;
+                color: #2c3e50;
+                font-size: 14px;
+            }
+
+            .form-group input,
+            .form-group select {
+                padding: 12px 15px;
+                border: 2px solid #e0e0e0;
+                border-radius: 10px;
+                font-size: 16px;
+                transition: all 0.3s ease;
+                font-family: 'Poppins', sans-serif;
+            }
+
+                .form-group input:focus,
+                .form-group select:focus {
+                    outline: none;
+                    border-color: #667eea;
+                    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+                }
+
+        .deposit-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2); /* Match dashboard button */
+            color: white;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            align-self: flex-start;
+        }
+
+            .deposit-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            }
+
+        .alert-success {
+            background: #e8f5e8;
+            color: #27ae60;
+            border: none;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .text-danger {
+            font-size: 12px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="deposit-container">
+        <h2 class="deposit-title">💳 Deposit to Cafeteria Account</h2>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success">
+                @TempData["SuccessMessage"]
+            </div>
+        }
+
+        <form asp-action="Deposit" method="post" class="deposit-form">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="DepositAmount" class="control-label">Deposit Amount (R)</label>
+                <input asp-for="DepositAmount" class="form-control" type="number" step="0.01" placeholder="250" min="250" />
+                <span asp-validation-for="DepositAmount" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="PaymentMethod" class="control-label">Payment Method</label>
+                <select asp-for="PaymentMethod" class="form-control" asp-items="@(new SelectList(Model.PaymentMethods))">
+                    <option value="">Select a payment method</option>
+                </select>
+                <span asp-validation-for="PaymentMethod" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="deposit-btn">Deposit</button>
+            </div>
+        </form>
+    </div>
+
+    @section Scripts {
+        <partial name="_ValidationScriptsPartial" />
+    }
+</body>
+</html>

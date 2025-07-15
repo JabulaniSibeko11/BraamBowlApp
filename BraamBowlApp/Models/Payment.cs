@@ -7,7 +7,7 @@ namespace BraamBowlApp.Models
         [Key]
         public int Payment_ID { get; set; }
 
-        public int Order_ID { get; set; }
+        public int? Order_ID { get; set; }
         public virtual Order Order { get; set; }
 
         [Required]

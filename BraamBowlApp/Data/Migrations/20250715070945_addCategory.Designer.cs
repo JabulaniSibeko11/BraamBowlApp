@@ -4,6 +4,7 @@ using BraamBowlApp.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BraamBowlApp.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250715070945_addCategory")]
+    partial class addCategory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -76,7 +79,7 @@ namespace BraamBowlApp.Data.Migrations
                     b.HasIndex("OrderId")
                         .IsUnique();
 
-                    b.ToTable("Deliveries", (string)null);
+                    b.ToTable("Deliveries");
                 });
 
             modelBuilder.Entity("BraamBowlApp.Models.Driver", b =>
@@ -113,7 +116,7 @@ namespace BraamBowlApp.Data.Migrations
 
                     b.HasKey("Driver_ID");
 
-                    b.ToTable("Drivers", (string)null);
+                    b.ToTable("Drivers");
                 });
 
             modelBuilder.Entity("BraamBowlApp.Models.MenuItem", b =>
@@ -153,7 +156,7 @@ namespace BraamBowlApp.Data.Migrations
 
                     b.HasIndex("Shop_ID");
 
-                    b.ToTable("MenuItems", (string)null);
+                    b.ToTable("MenuItems");
                 });
 
             modelBuilder.Entity("BraamBowlApp.Models.Order", b =>
@@ -189,7 +192,7 @@ namespace BraamBowlApp.Data.Migrations
 
                     b.HasIndex("Shop_ID1");
 
-                    b.ToTable("Orders", (string)null);
+                    b.ToTable("Orders");
                 });
 
             modelBuilder.Entity("BraamBowlApp.Models.OrderItem", b =>
@@ -214,7 +217,7 @@ namespace BraamBowlApp.Data.Migrations
 
                     b.HasKey("Order_Item_ID");
 
-                    b.ToTable("OrderItems", (string)null);
+                    b.ToTable("OrderItems");
                 });
 
             modelBuilder.Entity("BraamBowlApp.Models.Payment", b =>
@@ -259,7 +262,7 @@ namespace BraamBowlApp.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Payments", (string)null);
+                    b.ToTable("Payments");
                 });
 
             modelBuilder.Entity("BraamBowlApp.Models.Shop", b =>
@@ -291,7 +294,7 @@ namespace BraamBowlApp.Data.Migrations
 
                     b.HasKey("Shop_ID");
 
-                    b.ToTable("Shops", (string)null);
+                    b.ToTable("Shops");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

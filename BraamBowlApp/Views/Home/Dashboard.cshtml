@@ -1,0 +1,272 @@
+﻿@model DashboardViewModel
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Benefits Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="~/css/Dashboard.css" rel="stylesheet" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+           /*  overflow: hidden; /* Prevent scrolling when modal is active */ */
+        }
+
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8); /* Darker backdrop for contrast */
+            z-index: 1000; /* Below modal but above dashboard */
+        }
+
+        .modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 15px;
+            z-index: 1100; /* Above backdrop and dashboard */
+            max-width: 500px;
+            width: 90%;
+            padding: 25px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            display: block;
+        }
+
+        .modal-header {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #27ae60;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .modal-body {
+            font-size: 1rem;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+            .modal-body ul {
+                padding-left: 20px;
+                margin-bottom: 15px;
+            }
+
+        .modal-footer {
+            text-align: right;
+        }
+
+            .modal-footer button {
+                background: linear-gradient(135deg, #667eea, #764ba2); /* Match dashboard button style */
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-family: 'Poppins', sans-serif;
+                font-weight: 500;
+                transition: all 0.3s ease;
+            }
+
+                .modal-footer button:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+                }
+
+        .dashboard {
+            display: none; /* Hidden when modal is active */
+        }
+
+            .dashboard.active {
+                display: block; /* Shown after modal dismissal */
+            }
+    </style>
+</head>
+<body>
+    @if (Model.ShowWelcomeModal)
+    {
+        <div class="modal-backdrop"></div>
+        <div class="modal">
+            <div class="modal-header">Welcome to Your Healthy Eating Benefits!</div>
+            <div class="modal-body">
+                <p>Our company is excited to launch a new employee benefit program to encourage healthy eating. For every R250 you deposit into your personal cafeteria account each month, the company will grant an additional R500 credit!</p>
+                <p>With this program, you can:</p>
+                <ul>
+                    <li>Manage your deposits</li>
+                    <li>View your account balance</li>
+                    <li>Browse menus from various fast-food stores in Braamfontein</li>
+                    <li>Place orders and have them delivered</li>
+                </ul>
+                <p>Start exploring now and enjoy your healthy eating benefits!</p>
+            </div>
+            <div class="modal-footer">
+                <form asp-action="AcknowledgeWelcome" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit">Get Started</button>
+                </form>
+            </div>
+        </div>
+    }
+
+    <div class="dashboard @(Model.ShowWelcomeModal ? "" : "active")">
+        <div class="header">
+            <div class="logo">🍎 Healthy Eating Benefits</div>
+            <div class="balance-section">
+                <div class="last-deposit">
+                    <div class="deposit-date">Last Deposit: @(Model.LastDepositDate?.ToString("MMM yyyy") ?? "N/A")</div>
+                    <div class="deposit-amount">R@(Model.LastDepositAmount?.ToString("N2") ?? "0.00")</div>
+                </div>
+                <div class="balance-card">
+                    <div class="balance-amount">R@(Model.Balance?.ToString("N2") ?? "0.00")</div>
+                    <div class="balance-label">Available Balance</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">R@(Model.TotalDeposited.ToString("N2"))</div>
+                <div class="stat-label">Total Deposited</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">R@(Model.CompanyMatch.ToString("N2"))</div>
+                <div class="stat-label">Company Match</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">R@(Model.TotalSpent.ToString("N2"))</div>
+                <div class="stat-label">Total Spent</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">@Model.OrdersPlaced</div>
+                <div class="stat-label">Orders Placed</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="section">
+                <div class="section-title">💳 Make a Deposit</div>
+                <form asp-action="Deposit" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="deposit-form">
+                        <div class="form-group">
+                            <label asp-for="DepositAmount">Deposit Amount (R)</label>
+                            <input asp-for="DepositAmount" type="number" placeholder="250" min="250" step="50" class="form-control" />
+                            <span asp-validation-for="DepositAmount" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="DepositDate">Date</label>
+                            <input asp-for="DepositDate" type="date" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                            <span asp-validation-for="DepositDate" class="text-danger"></span>
+                        </div>
+                        <div style="background: #e8f5e8; padding: 15px; border-radius: 10px; margin: 10px 0;">
+                            <small style="color: #27ae60; font-weight: 500;">
+                                💡 Company will match with R500 for every R250 deposited!
+                            </small>
+                        </div>
+                        <button type="submit"  class="deposit-btn">Make Deposit</button>
+                    </div>
+                </form>
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+                }
+            </div>
+
+            <div class="section">
+                <div class="section-title">📊 Quick Stats</div>
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div class="history-item">
+                        <div class="history-date">This Month</div>
+                        <div class="history-details">Deposits: <span class="history-amount">R@(Model.MonthlyDeposits.ToString("N2"))</span></div>
+                    </div>
+                    <div class="history-item">
+                        <div class="history-date">Company Match</div>
+                        <div class="history-details">Earned: <span class="history-amount">R@(Model.MonthlyCompanyMatch.ToString("N2"))</span></div>
+                    </div>
+                    <div class="history-item">
+                        <div class="history-date">Avg Order</div>
+                        <div class="history-details">Amount: <span class="history-amount">R@(Model.AverageOrderAmount.ToString("N2"))</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="menu-section">
+            <div class="section-title">🏪 Braamfontein Food Partners</div>
+            <div style="margin-bottom: 20px;">
+                <a href="@Url.Action("Restuarants", "Home")" class="deposit-btn">Place Order</a>
+            </div>
+            <div class="menu-grid">
+
+                @foreach (var restaurant in Model.Restuarant)
+                {
+                    <div class="restaurant-card">
+                        <div class="restaurant-header">
+                            <div class="restaurant-name">@restaurant.ShopName</div>
+                        </div>
+                        <div class="menu-items">
+                            @foreach (var item in restaurant.MenuItems)
+                            {
+                                <div class="menu-item">
+                                    <div class="item-info">
+                                        <div class="item-name">@item.Item_Name</div>
+                                        <div class="item-description">@item.Category</div>
+                                    </div>
+                                    <div class="item-price">R@(item.Price.ToString("N2"))</div>
+                                    <form asp-action="PlaceOrder" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="ItemName" value="@item.Item_Name" />
+                                        <input type="hidden" name="Price" value="@item.Price" />
+                                        <input type="hidden" name="RestaurantName" value="@restaurant.ShopName" />
+                                        <button type="submit" class="order-btn">Add</button>
+                                    </form>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="history-section">
+            <div class="section">
+                <div class="section-title">📋 Order History</div>
+                @foreach (var order in Model.OrderHistory)
+                {
+                    <div class="history-item">
+                        <div class="history-date">@order.OrderDate.ToString("dd MMM yyyy - HH:mm")</div>
+                        <div class="history-details">@order.ItemName - @order.ShopName</div>
+                        <div class="history-amount">R@(order.Amount.ToString("N2"))</div>
+                    </div>
+                }
+            </div>
+
+            <div class="section">
+                <div class="section-title">🚀 Current Orders</div>
+                @foreach (var order in Model.CurrentOrders)
+                {
+                    <div class="current-order">
+                        <div class="order-status">🔥 Order #@order.OrderId - @order.Status</div>
+                        <div class="order-details">@order.ItemName - @order.ShopName</div>
+                        <div class="order-details">Estimated delivery: @order.EstimatedDeliveryMinutes minutes</div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    @* <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script> *@
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script asp-src-include="~/js/site.js"></script>
+</body>
+</html>

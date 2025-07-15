@@ -2,24 +2,19 @@
 
 namespace BraamBowlApp.Models
 {
-    public class MenuItem
+    public class OrderItemModel
     {
-        [Key]
-        public int MenuItem_ID { get; set; }
+        [Required]
+        public int MenuItemId { get; set; }
 
         [Required]
-        public string Item_Name { get; set; }
-
-        [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "Quantity must be at least 1")]
         public int Quantity { get; set; }
 
-        [Required]
+        public string Name { get; set; } 
         public decimal Price { get; set; } 
 
-        public string Category { get; set; }
-
-        public string Shop_ID { get; set; }
-        public virtual Shop Shop { get; set; }
+        public string? Category { get; set; }
 
         public string? Description { get; set; }
 
