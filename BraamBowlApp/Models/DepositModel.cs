@@ -12,5 +12,6 @@ namespace BraamBowlApp.Models
         public string PaymentMethod { get; set; }
 
         public List<string> PaymentMethods => new List<string> { "Bank Transfer", "Payroll Deduction", "Credit Card" };
+        public string PaymentToken { get; set; }
     }
 }

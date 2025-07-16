@@ -5,14 +5,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Choose Your Favorite Restaurant</title>
-    <link href="~/css/restuarantscss.css" rel="stylesheet" />
+    <title>🍽️ Choose Your Favorite Restaurant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="~/css/restuarant.css" rel="stylesheet" />
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🍽️ Choose Your Favorite Restaurant</h1>
-            <p>Discover amazing flavors from South Africa's best restaurants</p>
+            <button class="theme-toggle" aria-label="Toggle dark mode">🌙</button>
+            <h1 class="section-title">🍽️ Choose Your Favorite Restaurant</h1>
+            <p>Discover amazing flavors from South Africa's best restaurants 🌍</p>
         </div>
 
         @if (Model != null && Model.Any())
@@ -20,20 +22,32 @@
             <div class="restaurants-grid">
                 @foreach (var restaurant in Model)
                 {
-                    <div class="restaurant-card" onclick="selectRestaurant('@restaurant.Shop_Name')">
-                        <div class="restaurant-icon">🍽️</div>
+                    var cardClass = restaurant.Shop_Name.ToLower().Contains("pizza") ? "border-red" :
+                                    restaurant.Shop_Name.ToLower().Contains("kfc") ? "border-yellow" : 
+                                    restaurant.Shop_Name.ToLower().Contains("burger") ? "border-teal" : "border-blue";
+                    var icon = restaurant.Shop_Name.ToLower().Contains("pizza") ? "🍕" :
+                               restaurant.Shop_Name.ToLower().Contains("kfc") ? "🍗" :
+                               restaurant.Shop_Name.ToLower().Contains("burger") ? "🍔" : "🍽️";
+                    <div class="restaurant-card @cardClass" tabindex="0" onclick="selectRestaurant('@restaurant.Shop_Name')" role="button" aria-label="Select @restaurant.Shop_Name">
+                        @if (restaurant.IsActive)
+                        {
+                            <div class="status-indicator active" aria-label="Restaurant is active"></div>
+                        }
+                        else
+                        {
+                            <div class="status-indicator" aria-label="Restaurant is inactive"></div>
+                        }
+                        <div class="restaurant-icon">@icon</div>
                         <h3 class="restaurant-name">@restaurant.Shop_Name</h3>
-                        <div class="restaurant-info">
-                            <div class="restaurant-contact">
-                                <span>📍 @restaurant.Address</span>
-                                <span>📞 @restaurant.Contact_Number</span>
-                                @if (!string.IsNullOrEmpty(restaurant.Email))
-                                {
-                                    <span>✉️ @restaurant.Email</span>
-                                }
-                            </div>
+                        <div class="restaurant-contact">
+                            <span aria-label="Address">📍 @restaurant.Address</span>
+                            <span aria-label="Contact Number">📞 @restaurant.Contact_Number</span>
+                            @if (!string.IsNullOrEmpty(restaurant.Email))
+                            {
+                                <span aria-label="Email">✉️ @restaurant.Email</span>
+                            }
                         </div>
-                        <a href="@Url.Action("Menu", "Home", new { id = restaurant.Shop_ID })" class="order-btn">Order Now</a>
+                        <a href="@Url.Action("Menu", "Home", new { id = restaurant.Shop_ID })" class="action-btn">Order Now 🚀</a>
                     </div>
                 }
             </div>
@@ -41,30 +55,46 @@
         else
         {
             <div class="no-restaurants">
-                <p>No restaurants available at the moment.</p>
+                <p>😔 No restaurants available at the moment.</p>
             </div>
         }
     </div>
 
     <script>
+        // Theme Toggle
+        const themeToggle = document.querySelector('.theme-toggle');
+        themeToggle.addEventListener('click', () => {
+            document.body.dataset.theme = document.body.dataset.theme === 'dark' ? 'light' : 'dark';
+            themeToggle.textContent = document.body.dataset.theme === 'dark' ? '☀️' : '🌙';
+        });
+
+        // Restaurant Selection
         function selectRestaurant(restaurantName) {
-            // Add a subtle animation when card is clicked
-            event.currentTarget.style.transform = 'scale(0.95)';
+            const card = event.currentTarget;
+            card.style.transform = 'scale(0.98)';
+            card.setAttribute('aria-pressed', 'true');
             setTimeout(() => {
-                event.currentTarget.style.transform = 'translateY(-10px)';
-            }, 100);
-            
+                card.style.transform = 'translateY(-6px)';
+                card.setAttribute('aria-pressed', 'false');
+            }, 150);
             console.log('Selected restaurant:', restaurantName);
         }
 
-        // Add some interactive hover effects
+        // Card Animations
         document.querySelectorAll('.restaurant-card').forEach(card => {
-            card.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-10px) scale(1.02)';
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-6px) scale(1.02)';
             });
-            
-            card.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateY(0) scale(1)';
+
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0) scale(1)';
+            });
+
+            card.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    card.click();
+                }
             });
         });
     </script>

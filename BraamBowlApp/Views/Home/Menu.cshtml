@@ -13,7 +13,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@shopName Menu</title>
-    <link href="~/css/menucss.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
+    <link href="~/css/menu.css" rel="stylesheet" />
+    <style>
+        .cart-preview {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 10px;
+            min-width: 250px;
+            z-index: 1000;
+        }
+
+        .cart-summary:hover .cart-preview {
+            display: block;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+            .cart-item button {
+                background: #e74c3c;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 2px 6px;
+                cursor: pointer;
+                font-size: 12px;
+            }
+
+                .cart-item button:hover {
+                    background: #c0392b;
+                }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -21,6 +63,12 @@
             <h1 class="restaurant-title">🍽️ @shopName Menu</h1>
             <p class="restaurant-subtitle">Finger Lickin' Good - Braamfontein</p>
             <a href="/Restaurants" class="back-btn">← Back to Restaurants</a>
+        </div>
+
+        <div class="cart-summary" id="cartSummary">
+            <span class="cart-icon">🛒</span>
+            <span id="cartCount">0</span> items - R<span id="cartTotal">0.00</span>
+            <div class="cart-preview" id="cartPreview"></div>
         </div>
 
         @if (categories.Any())
@@ -93,25 +141,17 @@
         }
         else
         {
-            <p>No menu items available for this restaurant.</p>
+            <p class="no-items">No menu items available for this restaurant.</p>
         }
-
-        <div class="cart-summary" id="cartSummary">
-            <span class="cart-icon">🛒</span>
-            <span id="cartCount">0</span> items - R<span id="cartTotal">0.00</span>
-        </div>
     </div>
 
     <script>
-        // Updated JavaScript for the menu page
         let cart = JSON.parse(sessionStorage.getItem('cart')) || [];
         let cartTotal = cart.reduce((sum, item) => sum + item.price, 0);
         const shopId = @shopId;
 
-        // Initialize cart summary on page load
         updateCartSummary();
 
-        // Check if cart should be cleared (from TempData)
         @if (TempData["ClearCart"] != null)
         {
             <text>
@@ -122,7 +162,6 @@
             </text>
         }
 
-            // Handle category button clicks
             document.querySelectorAll('.category-btn').forEach(button => {
                 button.addEventListener('click', () => {
                     const categoryId = button.getAttribute('data-category');
@@ -130,7 +169,6 @@
                 });
             });
 
-        // Handle add-to-cart button clicks
         document.querySelectorAll('.add-to-cart').forEach(button => {
             button.addEventListener('click', () => {
                 const itemName = button.getAttribute('data-item-name');
@@ -156,7 +194,7 @@
 
         function addToCart(itemName, price, menuItemId) {
             const cartItem = {
-                name: itemName,
+                Item_Name: itemName,
                 price: price,
                 menuItemId: menuItemId
             };
@@ -166,7 +204,6 @@
             sessionStorage.setItem('cart', JSON.stringify(cart));
             updateCartSummary();
 
-            // Visual feedback
             const button = event.target;
             const originalText = button.textContent;
             const originalBackground = button.style.background;
@@ -186,65 +223,29 @@
             const cartSummary = document.getElementById('cartSummary');
             const cartCount = document.getElementById('cartCount');
             const cartTotalElement = document.getElementById('cartTotal');
+            const cartPreview = document.getElementById('cartPreview');
 
             cartCount.textContent = cart.length;
             cartTotalElement.textContent = cartTotal.toFixed(2);
-
             cartSummary.classList.toggle('show', cart.length > 0);
+
+            // Update cart preview
+            cartPreview.innerHTML = '';
+            if (cart.length > 0) {
+                cart.forEach((item, index) => {
+                    const cartItem = document.createElement('div');
+                    cartItem.className = 'cart-item';
+                    cartItem.innerHTML = `
+                                <span>${item.Item_Name} - R${item.price.toFixed(2)}</span>
+                                <button onclick="removeFromCart(${index})">Remove</button>
+                            `;
+                    cartPreview.appendChild(cartItem);
+                });
+            } else {
+                cartPreview.innerHTML = '<span class="text-gray-500">Cart is empty</span>';
+            }
         }
 
-        // Handle cart summary click to go to checkout
-        document.getElementById('cartSummary').addEventListener('click', () => {
-            if (cart.length > 0) {
-                // Show loading state
-                const cartSummary = document.getElementById('cartSummary');
-                cartSummary.innerHTML = '<span class="cart-icon">⏳</span> Processing...';
-
-
-
-                // Create a form dynamically to submit cart data
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = `/Checkout/${shopId}`;
-
-                // Add cart items as hidden inputs
-                cart.forEach(item => {
-                    const itemInput = document.createElement('input');
-                    itemInput.type = 'hidden';
-                    itemInput.name = 'cartItems';
-                    itemInput.value = JSON.stringify({
-                        name: item.name,
-                        price: item.price,
-                        menuItemId: item.menuItemId
-                    });
-                    form.appendChild(itemInput);
-                });
-
-                // Add shopId
-                const shopIdInput = document.createElement('input');
-                shopIdInput.type = 'hidden';
-                shopIdInput.name = 'shopId';
-                shopIdInput.value = shopId;
-                form.appendChild(shopIdInput);
-
-                // Add anti-forgery token if using
-                const token = document.querySelector('input[name="__RequestVerificationToken"]');
-                if (token) {
-                    const tokenInput = document.createElement('input');
-                    tokenInput.type = 'hidden';
-                    tokenInput.name = '__RequestVerificationToken';
-                    tokenInput.value = token.value;
-                    form.appendChild(tokenInput);
-                }
-
-                document.body.appendChild(form);
-                form.submit();
-            } else {
-                alert('Your cart is empty. Please add some items before proceeding to checkout.');
-            }
-        });
-
-        // Add item quantity management (optional enhancement)
         function removeFromCart(index) {
             if (index >= 0 && index < cart.length) {
                 cartTotal -= cart[index].price;
@@ -261,28 +262,68 @@
             updateCartSummary();
         }
 
-        // Add cart management buttons (you can add these to your HTML if needed)
+        document.getElementById('cartSummary').addEventListener('click', () => {
+            if (cart.length > 0) {
+                const cartSummary = document.getElementById('cartSummary');
+                cartSummary.innerHTML = '<span class="cart-icon">⏳</span> Processing...';
+
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/Checkout/${shopId}`;
+
+                cart.forEach(item => {
+                    const itemInput = document.createElement('input');
+                    itemInput.type = 'hidden';
+                    itemInput.name = 'cartItems';
+                    itemInput.value = JSON.stringify({
+                        Item_Name: item.Item_Name,
+                        price: item.price,
+                        menuItemId: item.menuItemId
+                    });
+                    form.appendChild(itemInput);
+                });
+
+                const shopIdInput = document.createElement('input');
+                shopIdInput.type = 'hidden';
+                shopIdInput.name = 'shopId';
+                shopIdInput.value = shopId;
+                form.appendChild(shopIdInput);
+
+                const token = document.querySelector('input[name="__RequestVerificationToken"]');
+                if (token) {
+                    const tokenInput = document.createElement('input');
+                    tokenInput.type = 'hidden';
+                    tokenInput.name = '__RequestVerificationToken';
+                    tokenInput.value = token.value;
+                    form.appendChild(tokenInput);
+                }
+
+                document.body.appendChild(form);
+                form.submit();
+            } else {
+                alert('Your cart is empty. Please add some items before proceeding to checkout.');
+            }
+        });
+
         function addCartManagementButtons() {
             const cartSummary = document.getElementById('cartSummary');
-
-            // Add clear cart button
             const clearButton = document.createElement('button');
             clearButton.textContent = '🗑️';
             clearButton.title = 'Clear Cart';
             clearButton.style.cssText = `
-                position: absolute;
-                top: 5px;
-                right: 5px;
-                background: #e74c3c;
-                color: white;
-                border: none;
-                border-radius: 50%;
-                width: 25px;
-                height: 25px;
-                font-size: 12px;
-                cursor: pointer;
-                display: none;
-            `;
+                        position: absolute;
+                        top: 5px;
+                        right: 5px;
+                        background: #e74c3c;
+                        color: white;
+                        border: none;
+                        border-radius: 50%;
+                        width: 25px;
+                        height: 25px;
+                        font-size: 12px;
+                        cursor: pointer;
+                        display: none;
+                    `;
 
             clearButton.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -293,7 +334,6 @@
 
             cartSummary.appendChild(clearButton);
 
-            // Show/hide clear button based on cart state
             const originalUpdateCartSummary = updateCartSummary;
             updateCartSummary = function () {
                 originalUpdateCartSummary();
@@ -301,24 +341,19 @@
             };
         }
 
-        // Call this function after DOM is loaded
         document.addEventListener('DOMContentLoaded', () => {
             addCartManagementButtons();
         });
 
-        // Handle browser back button
         window.addEventListener('pageshow', (event) => {
             if (event.persisted) {
-                // Page was loaded from cache, refresh cart state
                 cart = JSON.parse(sessionStorage.getItem('cart')) || [];
                 cartTotal = cart.reduce((sum, item) => sum + item.price, 0);
                 updateCartSummary();
             }
         });
 
-        // Add keyboard shortcuts (optional)
         document.addEventListener('keydown', (e) => {
-            // Press 'C' to clear cart
             if (e.key === 'c' || e.key === 'C') {
                 if (e.ctrlKey && cart.length > 0) {
                     e.preventDefault();
@@ -327,8 +362,6 @@
                     }
                 }
             }
-
-            // Press 'Enter' to go to checkout
             if (e.key === 'Enter' && e.ctrlKey && cart.length > 0) {
                 e.preventDefault();
                 document.getElementById('cartSummary').click();

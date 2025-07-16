@@ -14,18 +14,18 @@
             margin: 0;
             padding: 20px;
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Match dashboard background */
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
         }
 
         .deposit-container {
-            max-width: 600px; /* Smaller width for deposit form */
+            max-width: 600px;
             margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95); /* Match dashboard card */
+            background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
             padding: 30px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px); /* Match dashboard blur */
+            backdrop-filter: blur(10px);
         }
 
         .deposit-title {
@@ -42,7 +42,7 @@
                 content: '';
                 width: 4px;
                 height: 24px;
-                background: linear-gradient(135deg, #667eea, #764ba2); /* Match section-title */
+                background: linear-gradient(135deg, #667eea, #764ba2);
                 border-radius: 2px;
             }
 
@@ -82,7 +82,7 @@
                 }
 
         .deposit-btn {
-            background: linear-gradient(135deg, #667eea, #764ba2); /* Match dashboard button */
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
             padding: 15px 25px;
             border: none;
@@ -99,6 +99,12 @@
                 box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
             }
 
+            .deposit-btn:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                transform: none;
+            }
+
         .alert-success {
             background: #e8f5e8;
             color: #27ae60;
@@ -113,6 +119,15 @@
             font-size: 12px;
             margin-top: 5px;
         }
+
+        .test-mode-toggle {
+            margin-bottom: 15px;
+        }
+
+        .processing {
+            opacity: 0.7;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -126,11 +141,22 @@
             </div>
         }
 
-        <form asp-action="Deposit" method="post" class="deposit-form">
+        <!-- Test Mode Toggle (for development) -->
+        <div class="test-mode-toggle">
+            <label>
+                <input type="checkbox" id="testMode" /> Enable Test Mode (Bypass Yoco)
+            </label>
+        </div>
+
+        <form asp-action="Deposit" id="DepForm" method="post" class="deposit-form">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <!-- Hidden field for payment token -->
+            <input type="hidden" asp-for="PaymentToken" id="PaymentToken" />
+
             <div class="form-group">
                 <label asp-for="DepositAmount" class="control-label">Deposit Amount (R)</label>
-                <input asp-for="DepositAmount" class="form-control" type="number" step="0.01" placeholder="250" min="250" />
+                <input asp-for="DepositAmount" id="DepositAmount" class="form-control" type="number" step="0.01" placeholder="250" min="250" />
                 <span asp-validation-for="DepositAmount" class="text-danger"></span>
             </div>
             <div class="form-group">
@@ -141,13 +167,94 @@
                 <span asp-validation-for="PaymentMethod" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <button type="submit" class="deposit-btn">Deposit</button>
+                <button type="submit" id="SubmitBtn" class="deposit-btn">Deposit</button>
             </div>
         </form>
     </div>
 
     @section Scripts {
         <partial name="_ValidationScriptsPartial" />
+        <!-- Include the Yoco SDK in your web page -->
+        <script src="https://js.yoco.com/sdk/v1/yoco-sdk-web.js"></script>
+
+        <script>
+            var yoco = new window.YocoSDK({
+                publicKey: 'pk_test_38cef2e179qN7Lo0d864',
+            });
+
+            var checkoutButton = document.querySelector('#SubmitBtn');
+            var testModeCheckbox = document.querySelector('#testMode');
+            var form = document.querySelector('#DepForm');
+            var paymentTokenField = document.querySelector('#PaymentToken');
+            var depositAmountField = document.querySelector('#DepositAmount');
+            var paymentMethodField = document.querySelector('#PaymentMethod');
+
+            checkoutButton.addEventListener('click', function (event) {
+                event.preventDefault(); // Prevent the form from being submitted immediately
+
+                // Basic validation
+                if (!depositAmountField.value || parseFloat(depositAmountField.value) < 250) {
+                    alert('Please enter a valid deposit amount (minimum R250)');
+                    return;
+                }
+
+                if (!paymentMethodField.value) {
+                    alert('Please select a payment method');
+                    return;
+                }
+
+                // Disable button and show processing state
+                checkoutButton.disabled = true;
+                checkoutButton.textContent = 'Processing...';
+                form.classList.add('processing');
+
+                if (testModeCheckbox && testModeCheckbox.checked) {
+                    // Mock a successful Yoco response for testing
+                    const mockToken = 'mock_token_' + new Date().getTime();
+                    console.log("Test mode: Mock token generated: " + mockToken);
+
+                    // Set the payment token in the hidden field
+                    paymentTokenField.value = mockToken;
+
+                    // Submit the form with the mock token
+                    form.submit();
+                } else {
+                    // Use Yoco popup for real payment
+                    yoco.showPopup({
+                        amountInCents: Math.round(parseFloat(depositAmountField.value) * 100),
+                        currency: 'ZAR',
+                        name: 'Cafeteria Account Deposit',
+                        description: 'Deposit to your cafeteria account',
+                        callback: function (result) {
+                            if (result.error) {
+                                const errorMessage = result.error.message;
+                                alert("Payment failed: " + errorMessage);
+
+                                // Reset button state
+                                checkoutButton.disabled = false;
+                                checkoutButton.textContent = 'Deposit';
+                                form.classList.remove('processing');
+                            } else {
+                                console.log("Card successfully tokenized: " + result.id);
+
+                                // Set the payment token in the hidden field
+                                paymentTokenField.value = result.id;
+
+                                // Submit the form if payment is successful
+                                form.submit();
+                            }
+                        }
+                    });
+                }
+            });
+
+            // Reset button state if form submission fails (page reloads)
+            window.addEventListener('load', function () {
+                checkoutButton.disabled = false;
+                checkoutButton.textContent = 'Deposit';
+                form.classList.remove('processing');
+            });
+        </script>
     }
 </body>
 </html>

@@ -33,5 +33,9 @@ namespace BraamBowlApp.Models
 
         public DateTime Payment_Date { get; set; }
 
+        public string Order_Number { get; set; }
+
+        public string? Delivery_Address { get; set; }
+
     }
 }

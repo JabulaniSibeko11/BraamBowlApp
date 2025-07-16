@@ -29,6 +29,11 @@
                         <hr />
                         <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
                         <div class="form-floating mb-3">
+                            <input asp-for="Input.Employee_ID" class="form-control" autocomplete="given-name" aria-required="true" placeholder="Sap Number" />
+                            <label asp-for="Input.Employee_ID"><span class="emoji">👤</span>Sap Number</label>
+                            <span asp-validation-for="Input.Employee_ID" class="text-danger"></span>
+                        </div>
+                        <div class="form-floating mb-3">
                             <input asp-for="Input.First_Name" class="form-control" autocomplete="given-name" aria-required="true" placeholder="First Name" />
                             <label asp-for="Input.First_Name"><span class="emoji">👤</span>First Name</label>
                             <span asp-validation-for="Input.First_Name" class="text-danger"></span>

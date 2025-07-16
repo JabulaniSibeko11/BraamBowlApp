@@ -1,0 +1,29 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-device-width, initial-scale=1.0">
+    <title>Deposit Successful - BraamBowl</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="~/css/success.css" rel="stylesheet" />
+</head>
+<body>
+    <div class="success-container glass-card">
+        <h2 class="success-title">Deposit Successful</h2>
+        <div class="success-message">
+            Your deposit has been processed successfully! Thank you for topping up your cafeteria account.
+        </div>
+        <div class="success-details">
+            <p><strong>Deposit Amount:</strong> R @Model.DepositAmount.ToString("F2")</p>
+            <p><strong>Company Credit:</strong> R @Model.CompanyCredit.ToString("F2")</p>
+            <p><strong>New Balance:</strong> R @Model.NewBalance.ToString("F2")</p>
+        </div>
+        <a asp-controller="Home" asp-action="Dashboard" class="return-btn">Return to Dashboard</a>
+    </div>
+</body>
+</html>

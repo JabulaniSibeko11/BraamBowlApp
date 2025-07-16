@@ -35,13 +35,13 @@ namespace BraamBowlApp.Models
         public string Status { get; set; } // e.g., "Pending", "In Transit", "Delivered", "Failed"
 
         [Display(Name = "Remarks")]
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
         
         [Display(Name = "One-Time Pin (OTP)")]
         [StringLength(6)]
-        public string OTP { get; set; }
+        public string? OTP { get; set; }
 
         [Display(Name = "OTP Verified")]
-        public bool IsOTPVerified { get; set; } = false;
+        public bool? IsOTPVerified { get; set; } = false;
     }
 }

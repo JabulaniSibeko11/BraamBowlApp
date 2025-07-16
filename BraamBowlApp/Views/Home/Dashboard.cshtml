@@ -1,272 +1,492 @@
-﻿@model DashboardViewModel
+﻿@model BraamBowlApp.Models.DashboardViewModel
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employee Benefits Dashboard</title>
+    <title>Employee Cafeteria Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <link href="~/css/Dashboard.css" rel="stylesheet" />
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Poppins', sans-serif;
-           /*  overflow: hidden; /* Prevent scrolling when modal is active */ */
-        }
-
-        .modal-backdrop {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8); /* Darker backdrop for contrast */
-            z-index: 1000; /* Below modal but above dashboard */
-        }
-
-        .modal {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            border-radius: 15px;
-            z-index: 1100; /* Above backdrop and dashboard */
-            max-width: 500px;
-            width: 90%;
-            padding: 25px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-            display: block;
-        }
-
-        .modal-header {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #27ae60;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-
-        .modal-body {
-            font-size: 1rem;
-            color: #2c3e50;
-            margin-bottom: 20px;
-            line-height: 1.6;
-        }
-
-            .modal-body ul {
-                padding-left: 20px;
-                margin-bottom: 15px;
-            }
-
-        .modal-footer {
-            text-align: right;
-        }
-
-            .modal-footer button {
-                background: linear-gradient(135deg, #667eea, #764ba2); /* Match dashboard button style */
-                color: white;
-                border: none;
-                padding: 10px 20px;
-                border-radius: 8px;
-                cursor: pointer;
-                font-family: 'Poppins', sans-serif;
-                font-weight: 500;
-                transition: all 0.3s ease;
-            }
-
-                .modal-footer button:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-                }
-
-        .dashboard {
-            display: none; /* Hidden when modal is active */
-        }
-
-            .dashboard.active {
-                display: block; /* Shown after modal dismissal */
-            }
-    </style>
+    <link href="~/css/dash1.css" rel="stylesheet" />
 </head>
-<body>
-    @if (Model.ShowWelcomeModal)
-    {
-        <div class="modal-backdrop"></div>
-        <div class="modal">
-            <div class="modal-header">Welcome to Your Healthy Eating Benefits!</div>
-            <div class="modal-body">
-                <p>Our company is excited to launch a new employee benefit program to encourage healthy eating. For every R250 you deposit into your personal cafeteria account each month, the company will grant an additional R500 credit!</p>
-                <p>With this program, you can:</p>
-                <ul>
-                    <li>Manage your deposits</li>
-                    <li>View your account balance</li>
-                    <li>Browse menus from various fast-food stores in Braamfontein</li>
-                    <li>Place orders and have them delivered</li>
-                </ul>
-                <p>Start exploring now and enjoy your healthy eating benefits!</p>
+<body class="min-h-screen bg-gray-100">
+    <!-- Navigation Bar -->
+   @*  <nav class="bg-white shadow-lg fixed top-0 left-0 w-full z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center">
+                <span class="text-2xl font-bold text-blue-600">🍽️ BraamBowl</span>
             </div>
-            <div class="modal-footer">
-                <form asp-action="AcknowledgeWelcome" method="post">
-                    @Html.AntiForgeryToken()
-                    <button type="submit">Get Started</button>
-                </form>
-            </div>
-        </div>
-    }
-
-    <div class="dashboard @(Model.ShowWelcomeModal ? "" : "active")">
-        <div class="header">
-            <div class="logo">🍎 Healthy Eating Benefits</div>
-            <div class="balance-section">
-                <div class="last-deposit">
-                    <div class="deposit-date">Last Deposit: @(Model.LastDepositDate?.ToString("MMM yyyy") ?? "N/A")</div>
-                    <div class="deposit-amount">R@(Model.LastDepositAmount?.ToString("N2") ?? "0.00")</div>
+            <div class="flex items-center space-x-6">
+                <a href="/Home/Dashboard" class="text-gray-700 hover:text-blue-600 font-medium">Dashboard</a>
+                <div class="relative group">
+                    <button class="text-gray-700 hover:text-blue-600 font-medium flex items-center">
+                        Menu <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="absolute hidden group-hover:block bg-white shadow-lg rounded-lg mt-2 w-48">
+                        <a href="/Home/Restaurants" class="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">View Restaurants</a>
+                        <a href="/Home/Orders" class="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">Order History</a>
+                        <a href="/Home/Deposit" class="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">Deposit Funds</a>
+                    </div>
                 </div>
-                <div class="balance-card">
-                    <div class="balance-amount">R@(Model.Balance?.ToString("N2") ?? "0.00")</div>
-                    <div class="balance-label">Available Balance</div>
+                <a href="/Home/Profile" class="text-gray-700 hover:text-blue-600 font-medium">Profile</a>
+                <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Logout</button>
+            </div>
+        </div>
+    </nav> *@
+
+    <!-- Main Content -->
+    <div class="container max-w-7xl mx-auto px-4 pt-24 pb-8">
+        <!-- Header with Balance Info -->
+        <div class="flex justify-between items-start mb-8 fade-in">
+            <div class="text-left p-6 bg-white shadow-md rounded-lg max-w-2xl mx-auto mt-8">
+                <h1 class="text-4xl font-bold text-gray-900 mb-2 flex items-center">
+                    <span class="mr-2">🍽️</span> Cafeteria Dashboard
+                </h1>
+                <p class="text-gray-700 text-lg opacity-90">Manage your food benefits with ease</p>
+            </div>
+
+            <!-- Balance and Last Deposit Cards -->
+            <div class="flex gap-4">
+                <!-- Balance Card -->
+                <div class="balance-card glass-card p-6 rounded-2xl text-center relative overflow-hidden min-w-[200px]">
+                    <div class="relative z-10">
+                        <div class="text-3xl mb-2">💰</div>
+                        <div class="text-2xl font-bold mb-1">@(Model.Balance?.ToString("C") ?? "R0.00")</div>
+                        <div class="text-sm opacity-90">Available Balance</div>
+                    </div>
                 </div>
-            </div>
-        </div>
 
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-number">R@(Model.TotalDeposited.ToString("N2"))</div>
-                <div class="stat-label">Total Deposited</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">R@(Model.CompanyMatch.ToString("N2"))</div>
-                <div class="stat-label">Company Match</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">R@(Model.TotalSpent.ToString("N2"))</div>
-                <div class="stat-label">Total Spent</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">@Model.OrdersPlaced</div>
-                <div class="stat-label">Orders Placed</div>
-            </div>
-        </div>
-
-        <div class="main-content">
-            <div class="section">
-                <div class="section-title">💳 Make a Deposit</div>
-                <form asp-action="Deposit" method="post">
-                    @Html.AntiForgeryToken()
-                    <div class="deposit-form">
-                        <div class="form-group">
-                            <label asp-for="DepositAmount">Deposit Amount (R)</label>
-                            <input asp-for="DepositAmount" type="number" placeholder="250" min="250" step="50" class="form-control" />
-                            <span asp-validation-for="DepositAmount" class="text-danger"></span>
-                        </div>
-                        <div class="form-group">
-                            <label asp-for="DepositDate">Date</label>
-                            <input asp-for="DepositDate" type="date" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
-                            <span asp-validation-for="DepositDate" class="text-danger"></span>
-                        </div>
-                        <div style="background: #e8f5e8; padding: 15px; border-radius: 10px; margin: 10px 0;">
-                            <small style="color: #27ae60; font-weight: 500;">
-                                💡 Company will match with R500 for every R250 deposited!
-                            </small>
-                        </div>
-                        <button type="submit"  class="deposit-btn">Make Deposit</button>
-                    </div>
-                </form>
-                @if (TempData["SuccessMessage"] != null)
-                {
-                    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
-                }
-            </div>
-
-            <div class="section">
-                <div class="section-title">📊 Quick Stats</div>
-                <div style="display: flex; flex-direction: column; gap: 15px;">
-                    <div class="history-item">
-                        <div class="history-date">This Month</div>
-                        <div class="history-details">Deposits: <span class="history-amount">R@(Model.MonthlyDeposits.ToString("N2"))</span></div>
-                    </div>
-                    <div class="history-item">
-                        <div class="history-date">Company Match</div>
-                        <div class="history-details">Earned: <span class="history-amount">R@(Model.MonthlyCompanyMatch.ToString("N2"))</span></div>
-                    </div>
-                    <div class="history-item">
-                        <div class="history-date">Avg Order</div>
-                        <div class="history-details">Amount: <span class="history-amount">R@(Model.AverageOrderAmount.ToString("N2"))</span></div>
-                    </div>
+                <!-- Last Deposit -->
+                <div class="deposit-card glass-card p-6 rounded-2xl text-center min-w-[200px]">
+                    <div class="text-3xl mb-2">💳</div>
+                    <div class="text-2xl font-bold mb-1">@(Model.LastDepositAmount?.ToString("C") ?? "R0.00")</div>
+                    <div class="text-sm opacity-90">Last Deposit</div>
+                    <div class="text-xs opacity-75 mt-1">@(Model.LastDepositDate?.ToString("MMM dd, yyyy") ?? "No deposits yet")</div>
                 </div>
             </div>
         </div>
 
-        <div class="menu-section">
-            <div class="section-title">🏪 Braamfontein Food Partners</div>
-            <div style="margin-bottom: 20px;">
-                <a href="@Url.Action("Restuarants", "Home")" class="deposit-btn">Place Order</a>
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="stat-card glass-card p-6 rounded-2xl fade-in">
+                <div class="icon-wrapper">
+                    <span class="text-red-500">🛍️</span>
+                </div>
+                <div class="text-2xl font-bold text-gray-800 mb-1">@Model.TotalSpent.ToString("C")</div>
+                <div class="text-sm text-gray-600 font-medium">Total Spent</div>
             </div>
-            <div class="menu-grid">
+            <div class="stat-card glass-card p-6 rounded-2xl fade-in">
+                <div class="icon-wrapper">
+                    <span class="text-teal-500">📦</span>
+                </div>
+                <div class="text-2xl font-bold text-gray-800 mb-1">@Model.OrdersPlaced</div>
+                <div class="text-sm text-gray-600 font-medium">Orders Placed</div>
+            </div>
+            <div class="stat-card glass-card p-6 rounded-2xl fade-in">
+                <div class="icon-wrapper">
+                    <span class="text-amber-500">🏢</span>
+                </div>
+                <div class="text-2xl font-bold text-gray-800 mb-1">@Model.CompanyMatch.ToString("C")</div>
+                <div class="text-sm text-gray-600 font-medium">Company Match</div>
+            </div>
+            <div class="stat-card glass-card p-6 rounded-2xl fade-in">
+                <div class="icon-wrapper">
+                    <span class="text-blue-500">📊</span>
+                </div>
+                <div class="text-2xl font-bold text-gray-800 mb-1">@Model.AverageOrderAmount.ToString("C")</div>
+                <div class="text-sm text-gray-600 font-medium">Avg Order Amount</div>
+            </div>
+        </div>
 
+        <!-- Quick Actions -->
+        <div class="glass-card p-6 rounded-2xl mb-8 fade-in">
+            <h2 class="section-title text-xl">🚀 Quick Actions</h2>
+            <div class="flex flex-wrap gap-4">
+                <button class="action-btn" onclick="openDepositModal()">💳 Deposit Funds</button>
+              @*   <button class="action-btn secondary" onclick="window.location.href='/Home/Restaurants'">🛒 Place Order</button>
+                <button class="action-btn tertiary" onclick="window.location.href='/Home/Restaurants'">📋 View Menu</button> *@
+
+                <a asp-controller="Home" asp-action="Restuarants" class="action-btn secondary">🛒 Place Order</a>
+                <a asp-controller="Home" asp-action="Restuarants" class="action-btn tertiary">📋 View Menu</a>
+
+            </div>
+        </div>
+
+        <!-- Restaurants -->
+        <div class="glass-card p-6 rounded-2xl mb-8 fade-in">
+            <h2 class="section-title text-xl">🏪 Available Restaurants</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 @foreach (var restaurant in Model.Restuarant)
                 {
-                    <div class="restaurant-card">
-                        <div class="restaurant-header">
-                            <div class="restaurant-name">@restaurant.ShopName</div>
+                    var restaurantIcons = new Dictionary<string, string>
+                {
+                { "McDonald's", "🍔" },
+                { "KFC", "🍗" },
+                { "Burger King", "👑" },
+                { "Subway", "🥪" },
+                { "Pizza Hut", "🍕" },
+                { "Nando's", "🔥" },
+                { "Steers", "🥩" },
+                { "Wimpy", "🍳" }
+                };
+                    var icon = restaurantIcons.ContainsKey(restaurant.ShopName) ? restaurantIcons[restaurant.ShopName] : "🍴";
+                    <div class="restaurant-card shadow-lg cursor-pointer p-6" onclick="window.location.href='/Home/Restaurants'">
+                        <div class="icon-wrapper mx-auto">
+                            <span class="text-2xl">@icon</span>
                         </div>
-                        <div class="menu-items">
-                            @foreach (var item in restaurant.MenuItems)
-                            {
-                                <div class="menu-item">
-                                    <div class="item-info">
-                                        <div class="item-name">@item.Item_Name</div>
-                                        <div class="item-description">@item.Category</div>
-                                    </div>
-                                    <div class="item-price">R@(item.Price.ToString("N2"))</div>
-                                    <form asp-action="PlaceOrder" method="post">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="ItemName" value="@item.Item_Name" />
-                                        <input type="hidden" name="Price" value="@item.Price" />
-                                        <input type="hidden" name="RestaurantName" value="@restaurant.ShopName" />
-                                        <button type="submit" class="order-btn">Add</button>
-                                    </form>
-                                </div>
-                            }
+                        <div class="text-center">
+                            <div class="font-semibold text-lg text-gray-800 mb-2">@restaurant.ShopName</div>
+                            <div class="text-sm text-gray-600 mb-3">Fresh food delivered fast</div>
+                            <div class="inline-block bg-gradient-to-r from-blue-500 to-teal-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                                @restaurant.MenuItems.Count items available
+                            </div>
                         </div>
                     </div>
                 }
             </div>
         </div>
 
-        <div class="history-section">
-            <div class="section">
-                <div class="section-title">📋 Order History</div>
-                @foreach (var order in Model.OrderHistory)
+        <!-- Recent Activity & Current Orders -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div class="glass-card p-6 rounded-2xl fade-in">
+                <h2 class="section-title text-xl">📊 Recent Activity</h2>
+                @foreach (var order in Model.OrderHistory.Take(2))
                 {
-                    <div class="history-item">
-                        <div class="history-date">@order.OrderDate.ToString("dd MMM yyyy - HH:mm")</div>
-                        <div class="history-details">@order.ItemName - @order.ShopName</div>
-                        <div class="history-amount">R@(order.Amount.ToString("N2"))</div>
+                    <div class="order-item">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="font-semibold text-gray-800 mb-1">@order.ShopName</div>
+                                <div class="text-sm text-gray-600 mb-1">@order.ItemName</div>
+                                <div class="text-xs text-gray-500">@order.OrderDate.ToString("MMM dd, yyyy h:mm tt")</div>
+                            </div>
+                            <div class="font-bold text-lg text-gray-800">@order.Amount.ToString("C")</div>
+                        </div>
+                    </div>
+                }
+                @if (!Model.OrderHistory.Any())
+                {
+                    <div class="text-center py-8 text-gray-500">
+                        <div class="text-4xl mb-2">🍽️</div>
+                        <p>No recent activity to display</p>
                     </div>
                 }
             </div>
-
-            <div class="section">
-                <div class="section-title">🚀 Current Orders</div>
+            <div class="glass-card p-6 rounded-2xl fade-in">
+                <h2 class="section-title text-xl">🔄 Current Orders</h2>
                 @foreach (var order in Model.CurrentOrders)
                 {
-                    <div class="current-order">
-                        <div class="order-status">🔥 Order #@order.OrderId - @order.Status</div>
-                        <div class="order-details">@order.ItemName - @order.ShopName</div>
-                        <div class="order-details">Estimated delivery: @order.EstimatedDeliveryMinutes minutes</div>
+                    <div class="order-item">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="font-semibold text-gray-800 mb-1">@order.ShopName</div>
+                                <div class="text-sm text-gray-600 mb-1">@order.ItemName</div>
+                                <div class="text-xs text-gray-500">Order #@order.OrderId</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="status-badge status-@order.Status.ToLower() mb-1">@order.Status</div>
+                                <div class="text-xs text-gray-500">~@order.EstimatedDeliveryMinutes mins</div>
+                            </div>
+                        </div>
+                    </div>
+                }
+                @if (!Model.CurrentOrders.Any())
+                {
+                    <div class="text-center py-8 text-gray-500">
+                        <div class="text-4xl mb-2">📦</div>
+                        <p>No current orders</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Order History -->
+        <div class="glass-card p-6 rounded-2xl fade-in">
+            <h2 class="section-title text-xl">📋 Complete Order History</h2>
+            <div class="space-y-3">
+                @foreach (var order in Model.OrderHistory)
+                {
+                    <div class="order-item">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <div class="font-semibold text-gray-800">@order.ShopName</div>
+                                <div class="text-sm text-gray-600">@order.ItemName</div>
+                                <div class="text-xs text-gray-500">@order.OrderDate.ToString("MMM dd, yyyy")</div>
+                            </div>
+                            <div class="font-bold text-lg text-gray-800">@order.Amount.ToString("C")</div>
+                        </div>
+                    </div>
+                }
+                @if (!Model.OrderHistory.Any())
+                {
+                    <div class="text-center py-12 text-gray-500">
+                        <div class="text-6xl mb-4">📝</div>
+                        <p class="text-lg">No order history available</p>
+                        <p class="text-sm">Start by placing your first order!</p>
                     </div>
                 }
             </div>
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    @* <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script> *@
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script asp-src-include="~/js/site.js"></script>
+    <!-- Welcome Modal -->
+    <div id="welcomeModal" class="modal" style="display: @(Model.ShowWelcomeModal ? "block" : "none")">
+        <div class="modal-content">
+            <span class="close" onclick="closeWelcomeModal()">×</span>
+            <div class="text-center mb-6">
+                <div class="text-6xl mb-4">🎉</div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Welcome to Your Cafeteria!</h2>
+            </div>
+            <p class="text-gray-600 mb-4">Enjoy our comprehensive employee benefit program. Deposit R250 monthly and receive an additional R500 company credit!</p>
+            <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                <p class="text-gray-700 font-semibold mb-2">You can:</p>
+                <ul class="space-y-1 text-gray-600">
+                    <li>• Manage your deposits seamlessly</li>
+                    <li>• Check your balance in real-time</li>
+                    <li>• Browse restaurant menus</li>
+                    <li>• Place and track orders</li>
+                </ul>
+            </div>
+            <button class="btn w-full" onclick="closeWelcomeModal()">Get Started 🚀</button>
+        </div>
+    </div>
+
+   
+    <div id="depositModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeDepositModal()">×</span>
+            <div class="text-center mb-6">
+                <div class="text-4xl mb-2">💳</div>
+                <h2 class="text-2xl font-bold text-gray-800">Make a Deposit</h2>
+            </div>
+            <div id="depositMessage" class="hidden text-center mb-4"></div>
+            <div class="test-mode-toggle mb-4">
+                <label class="text-gray-600">
+                    <input type="checkbox" id="confirmPaymentAgreement" name="confirmPaymentAgreement">
+                    Confirm Payment Agreement (Required for Cash or Payroll Deduction)
+
+                </label>
+            </div>
+            <form id="DepForm" class="deposit-form">
+                <div class="form-group">
+                    <label asp-for="DepositAmount" class="control-label">Deposit Amount (Minimum R250)</label>
+                    <input asp-for="DepositAmount" id="DepositAmount" class="form-control" type="number" step="0.01" placeholder="250" min="250" required>
+                    <span id="DepositAmountError" class="text-red-500 text-sm"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="PaymentMethod" class="control-label">Payment Method</label>
+                    <select asp-for="PaymentMethod" id="PaymentMethod" class="form-control" required>
+                        <option value="">Select a payment method</option>
+                        @foreach (var method in Model.PaymentMethods)
+                        {
+                            <option value="@method" selected="@(Model.PaymentMethod == method ? "selected" : null)">@method</option>
+                        }
+                    </select>
+                    <span id="PaymentMethodError" class="text-red-500 text-sm"></span>
+                </div>
+                <input type="hidden" asp-for="PaymentToken" id="PaymentToken">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="AntiForgeryToken" name="RequestVerificationToken" value="@Html.AntiForgeryToken()" />
+
+                <button type="button" id="SubmitBtn" class="btn w-full">Process Deposit</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://js.yoco.com/sdk/v1/yoco-sdk-web.js"></script>
+    <script>
+        var yoco = new window.YocoSDK({ publicKey: 'pk_test_38cef2e179qN7Lo0d864' });
+
+        function openDepositModal() {
+            document.getElementById('depositModal').style.display = 'block';
+            document.getElementById('depositMessage').classList.add('hidden');
+            document.getElementById('DepositAmountError').textContent = '';
+            document.getElementById('PaymentMethodError').textContent = '';
+            document.getElementById('SubmitBtn').disabled = false;
+            document.getElementById('SubmitBtn').textContent = 'Process Deposit';
+            document.getElementById('DepForm').reset();
+            document.getElementById('confirmPaymentAgreement').checked = false;
+        }
+
+        function closeDepositModal() {
+            document.getElementById('depositModal').style.display = 'none';
+        }
+
+        function closeWelcomeModal() {
+            document.getElementById('welcomeModal').style.display = 'none';
+            fetch('/Dashboard/MarkWelcomeModalSeen', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => console.log('Welcome modal marked as seen'))
+                .catch(error => console.error('Error:', error));
+        }
+
+        window.onclick = function (event) {
+            const modals = document.getElementsByClassName('modal');
+            for (let i = 0; i < modals.length; i++) {
+                if (event.target === modals[i]) modals[i].style.display = 'none';
+            }
+        };
+
+        var checkoutButton = document.querySelector('#SubmitBtn');
+        var testModeCheckbox = document.querySelector('#testMode');
+        var form = document.querySelector('#DepForm');
+        var paymentTokenField = document.querySelector('#PaymentToken');
+        var depositAmountField = document.querySelector('#DepositAmount');
+        var paymentMethodField = document.querySelector('#PaymentMethod');
+        var depositMessage = document.querySelector('#depositMessage');
+        var depositAmountError = document.querySelector('#DepositAmountError');
+        var paymentMethodError = document.querySelector('#PaymentMethodError');
+
+        checkoutButton.addEventListener('click', function () {
+            depositMessage.classList.add('hidden');
+            depositAmountError.textContent = '';
+            paymentMethodError.textContent = '';
+
+            if (!depositAmountField.value || parseFloat(depositAmountField.value) < 250) {
+                depositAmountError.textContent = 'Please enter a valid deposit amount (minimum R250)';
+                return;
+            }
+
+            if (!paymentMethodField.value) {
+                paymentMethodError.textContent = 'Please select a payment method';
+                return;
+            }
+
+            // Hide the modal before showing Yoco popup
+            closeDepositModal();
+            checkoutButton.disabled = true;
+            checkoutButton.textContent = 'Processing...';
+
+            if (testModeCheckbox && testModeCheckbox.checked) {
+                const mockToken = 'mock_token_' + new Date().getTime();
+                paymentTokenField.value = mockToken;
+                submitDeposit();
+            } else {
+                yoco.showPopup({
+                    amountInCents: Math.round(parseFloat(depositAmountField.value) * 100),
+                    currency: 'ZAR',
+                    name: 'Cafeteria Account Deposit',
+                    description: 'Deposit to your cafeteria account',
+                    callback: function (result) {
+                        if (result.error) {
+                            // Re-show modal on error
+                            openDepositModal();
+                            depositMessage.classList.remove('hidden');
+                            depositMessage.classList.add('text-red-500');
+                            depositMessage.textContent = 'Payment failed: ' + result.error.message;
+                            checkoutButton.disabled = false;
+                            checkoutButton.textContent = 'Process Deposit';
+                        } else {
+                            paymentTokenField.value = result.id;
+                            submitDeposit();
+                        }
+                    }
+                });
+            }
+        });
+
+        function submitDeposit() {
+            const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            const formData = {
+                DepositAmount: parseFloat(depositAmountField.value),
+                PaymentMethod: paymentMethodField.value,
+                PaymentToken: paymentTokenField.value
+            };
+
+            fetch('/Home/Deposit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': csrfToken
+                },
+                body: JSON.stringify(formData)
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error("Network response was not OK");
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        const balanceMatch = data.message.match(/New balance: R([\d.]+)/);
+                        if (balanceMatch) {
+                            document.querySelector('.balance-card .text-2xl').textContent = `R${balanceMatch[1]}`;
+                        }
+                        // Redirect to the success view
+                        window.location.href = data.redirectUrl;
+                    } else {
+                        openDepositModal();
+                        depositMessage.classList.remove('hidden', 'text-green-500');
+                        depositMessage.classList.add('text-red-500');
+                        depositMessage.textContent = data.message || (data.errors ? data.errors.join(' ') : 'An error occurred. Please try again.');
+                        checkoutButton.disabled = false;
+                        checkoutButton.textContent = 'Process Deposit';
+                    }
+                })
+                .catch(error => {
+                    openDepositModal();
+                    depositMessage.classList.remove('hidden', 'text-green-500');
+                    depositMessage.classList.add('text-red-500');
+                    depositMessage.textContent = 'Error: ' + error.message;
+                    checkoutButton.disabled = false;
+                    checkoutButton.textContent = 'Process Deposit';
+                });
+        }
+        // Check for openDeposit query parameter on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('openDeposit') === 'true') {
+                openDepositModal();
+                // Optionally, clear the query parameter from the URL for a cleaner look
+                window.history.replaceState({}, document.title, '/Home/Dashboard');
+            }
+        });
+
+        // function submitDeposit() {
+        //     const formData = {
+        //         DepositAmount: parseFloat(depositAmountField.value),
+        //         PaymentMethod: paymentMethodField.value,
+        //         PaymentToken: paymentTokenField.value,
+        //         __RequestVerificationToken: document.querySelector('#AntiForgeryToken').value
+        //     };
+
+        //     fetch('/Deposit', {
+        //         method: 'POST',
+        //         headers: {
+        //             'Content-Type': 'application/json',
+        //             'RequestVerificationToken': formData.__RequestVerificationToken
+        //         },
+        //         body: JSON.stringify(formData)
+        //     })
+        //         .then(response => response.json())
+        //         .then(data => {
+        //             if (data.success) {
+        //                 // Update balance display and keep modal hidden
+        //                 const balanceMatch = data.message.match(/New balance: R([\d.]+)/);
+        //                 if (balanceMatch) {
+        //                     document.querySelector('.balance-card .text-2xl').textContent = `R${balanceMatch[1]}`;
+        //                 }
+        //                 // No modal re-display on success
+        //             } else {
+        //                 // Re-show modal on error
+        //                 openDepositModal();
+        //                 depositMessage.classList.remove('hidden');
+        //                 depositMessage.classList.add('text-red-500');
+        //                 depositMessage.textContent = data.message || data.errors?.join(' ') || 'An error occurred. Please try again.';
+        //                 checkoutButton.disabled = false;
+        //                 checkoutButton.textContent = 'Process Deposit';
+        //             }
+        //         })
+        //         .catch(error => {
+        //             // Re-show modal on error
+        //             openDepositModal();
+        //             depositMessage.classList.remove('hidden');
+        //             depositMessage.classList.add('text-red-500');
+        //             depositMessage.textContent = 'Error: ' + error.message;
+        //             checkoutButton.disabled = false;
+        //             checkoutButton.textContent = 'Process Deposit';
+        //         });
+        // }
+    </script>
 </body>
 </html>

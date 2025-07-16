@@ -10,7 +10,10 @@
         public List<CartItem> CartItems { get; set; } = new List<CartItem>();
         public string EmployeeName { get; set; }
 
+        public string EmployeeSurname { get; set; }
+
         public string Shop_Name { get; set; }
+        public string DeliveryAddress { get; set; }
 
     }
 }

@@ -23,6 +23,11 @@ namespace BraamBowlApp.Models
         public List<CurrentOrder> CurrentOrders { get; set; } = new List<CurrentOrder>();
         public List<Deposit> depositModels { get; set; } = new List<Deposit>();
 
+        public string PaymentMethod { get; set; }
+
+        public List<string> PaymentMethods => new List<string> { "Bank Transfer", "Payroll Deduction", "Credit Card" };
+        public string PaymentToken { get; set; }
+
     }
 
 
@@ -61,12 +66,14 @@ namespace BraamBowlApp.Models
     public class Deposit
     {
         [Required(ErrorMessage = "Please enter a deposit amount.")]
-        [Range(0.01, double.MaxValue, ErrorMessage = "Deposit amount must be positive.")]
+        [Range(250, double.MaxValue, ErrorMessage = "Minimum deposit is R250")]
         public decimal DepositAmount { get; set; }
 
         [Required(ErrorMessage = "Please select a payment method.")]
         public string PaymentMethod { get; set; }
 
         public List<string> PaymentMethods => new List<string> { "Bank Transfer", "Payroll Deduction", "Credit Card" };
+
+        public string PaymentToken { get; set; }
     }
 }

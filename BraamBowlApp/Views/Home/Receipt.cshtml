@@ -1,0 +1,249 @@
+﻿@model ReceiptViewModel
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Receipt - @Model.ShopName</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f1f5f9;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: #ffffff;
+            padding: 10px 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            height: 60px; /* Assumed height of the nav bar */
+        }
+        .receipt-container {
+            max-width: 700px;
+            width: 100%;
+            
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            animation: fadeIn 0.6s ease-in-out;
+            margin: 0 auto; /* Center the container */
+        }
+
+        .receipt-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+            .receipt-header h1 {
+                color: #1f2937;
+                font-weight: 700;
+                font-size: 2rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .receipt-header h2 {
+                color: #374151;
+                font-weight: 600;
+                font-size: 1.5rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .receipt-header p {
+                color: #6b7280;
+                font-size: 1rem;
+            }
+
+        .success-message {
+            background: #ccfbf1;
+            color: #0d9488;
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+            margin: 1rem 0;
+            font-weight: 600;
+        }
+
+        .employee-info, .order-details {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            color: #1f2937;
+            font-weight: 700;
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+            padding-left: 1rem;
+        }
+
+            .section-title::before {
+                content: '';
+                position: absolute;
+                left: 0;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 4px;
+                height: 24px;
+                background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+                border-radius: 2px;
+            }
+
+        .employee-info p, .order-details p {
+            color: #374151;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .order-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+
+            .order-item:hover {
+                background: #f1f5f9;
+                transform: translateX(4px);
+                box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            }
+
+            .order-item h4 {
+                color: #1f2937;
+                font-weight: 600;
+                margin-bottom: 0.25rem;
+            }
+
+            .order-item p {
+                color: #6b7280;
+                font-size: 0.9rem;
+            }
+
+            .order-item .item-total {
+                color: #2563eb;
+                font-weight: 600;
+            }
+
+        .order-summary {
+            text-align: right;
+            margin-top: 1.5rem;
+        }
+
+            .order-summary h3 {
+                color: #1f2937;
+                font-weight: 700;
+                font-size: 1.5rem;
+            }
+
+        .action-btn {
+            background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 14px;
+            box-shadow: 0 4px 8px rgba(37, 99, 235, 0.2);
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+            .action-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 16px rgba(37, 99, 235, 0.3);
+            }
+
+            .action-btn.secondary {
+                background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+                box-shadow: 0 4px 8px rgba(20, 184, 166, 0.2);
+            }
+
+                .action-btn.secondary:hover {
+                    box-shadow: 0 8px 16px rgba(20, 184, 166, 0.3);
+                }
+    </style>
+</head>
+<body>
+    <div class="receipt-container">
+        <div class="receipt-header">
+            <h1>Order Receipt</h1>
+            <h2>@Model.ShopName</h2>
+            <p>Order Number: @Model.OrderNumber</p>
+        </div>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <p class="success-message">@TempData["SuccessMessage"]</p>
+        }
+
+        <div class="employee-info">
+            <h3 class="section-title">Customer Information</h3>
+            <p>Name: @Model.EmployeeName @Model.EmployeeSurname</p>
+        </div>
+
+        <div class="order-details">
+            <h3 class="section-title">Order Details</h3>
+            <p>Order Date: @Model.OrderDate.ToString("yyyy-MM-dd HH:mm")</p>
+            <p>Estimated Delivery: @Model.EstimatedDelivery.ToString("yyyy-MM-dd HH:mm")</p>
+            <p>Delivery Address: @Model.DeliveryAddress</p>
+            <p>Driver: @Model.DriverName</p>
+            <p>OTP: @Model.OTP (Please keep this OTP to verify your delivery upon arrival)</p>
+            <div class="order-items">
+                @foreach (var item in Model.Items)
+                {
+                    <div class="order-item">
+                        <div>
+                            <h4>@item.Name</h4>
+                            <p>R @item.Price.ToString("F2") x @item.Quantity</p>
+                        </div>
+                        <div class="item-total">R @((item.Price * item.Quantity).ToString("F2"))</div>
+                    </div>
+                }
+            </div>
+            <div class="order-summary">
+                <h3>Total: R @Model.TotalAmount.ToString("F2")</h3>
+            </div>
+        </div>
+
+        <a asp-controller="Home" asp-action="Index" asp-route-id="@Model.ShopId" class="btn btn-primary">Back to Menu</a>
+
+     @*    <a asp-controller="Checkout" asp-action="VerifyOTP" asp-route-id="@Model.OrderId" class="btn btn-secondary">Verify OTP</a>
+ *@
+    </div>
+
+    <script>
+        if (@((TempData["ClearCart"] != null).ToString().ToLower())) {
+            sessionStorage.removeItem('cart');
+        }
+    </script>
+</body>
+</html>
