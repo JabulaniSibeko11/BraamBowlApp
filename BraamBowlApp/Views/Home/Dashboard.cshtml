@@ -30,7 +30,7 @@
                     </div>
                 </div>
                 <a href="/Home/Profile" class="text-gray-700 hover:text-blue-600 font-medium">Profile</a>
-                <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Logout</button>
+                <a href="/Account/Logout" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Logout</a>
             </div>
         </div>
     </nav> *@
@@ -74,28 +74,28 @@
                     <span class="text-red-500">🛍️</span>
                 </div>
                 <div class="text-2xl font-bold text-gray-800 mb-1">@Model.TotalSpent.ToString("C")</div>
-                <div class="text-sm text-gray-600 font-medium">Total Spent</div>
+                <div class="text-sm text-gray-600 font-medium">Total Spent (All Time)</div>
             </div>
             <div class="stat-card glass-card p-6 rounded-2xl fade-in">
                 <div class="icon-wrapper">
                     <span class="text-teal-500">📦</span>
                 </div>
                 <div class="text-2xl font-bold text-gray-800 mb-1">@Model.OrdersPlaced</div>
-                <div class="text-sm text-gray-600 font-medium">Orders Placed</div>
+                <div class="text-sm text-gray-600 font-medium">Today's Orders</div>
             </div>
             <div class="stat-card glass-card p-6 rounded-2xl fade-in">
                 <div class="icon-wrapper">
                     <span class="text-amber-500">🏢</span>
                 </div>
                 <div class="text-2xl font-bold text-gray-800 mb-1">@Model.CompanyMatch.ToString("C")</div>
-                <div class="text-sm text-gray-600 font-medium">Company Match</div>
+                <div class="text-sm text-gray-600 font-medium">Company Credit</div>
             </div>
             <div class="stat-card glass-card p-6 rounded-2xl fade-in">
                 <div class="icon-wrapper">
                     <span class="text-blue-500">📊</span>
                 </div>
                 <div class="text-2xl font-bold text-gray-800 mb-1">@Model.AverageOrderAmount.ToString("C")</div>
-                <div class="text-sm text-gray-600 font-medium">Avg Order Amount</div>
+                <div class="text-sm text-gray-600 font-medium">Avg Order Today</div>
             </div>
         </div>
 
@@ -104,12 +104,8 @@
             <h2 class="section-title text-xl">🚀 Quick Actions</h2>
             <div class="flex flex-wrap gap-4">
                 <button class="action-btn" onclick="openDepositModal()">💳 Deposit Funds</button>
-              @*   <button class="action-btn secondary" onclick="window.location.href='/Home/Restaurants'">🛒 Place Order</button>
-                <button class="action-btn tertiary" onclick="window.location.href='/Home/Restaurants'">📋 View Menu</button> *@
-
-                <a asp-controller="Home" asp-action="Restuarants" class="action-btn secondary">🛒 Place Order</a>
-                <a asp-controller="Home" asp-action="Restuarants" class="action-btn tertiary">📋 View Menu</a>
-
+                <a asp-controller="Home" asp-action="Restaurants" class="action-btn secondary">🛒 Place Order</a>
+                <a asp-controller="Home" asp-action="Restaurants" class="action-btn tertiary">📋 View Menu</a>
             </div>
         </div>
 
@@ -150,10 +146,10 @@
         <!-- Recent Activity & Current Orders -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <div class="glass-card p-6 rounded-2xl fade-in">
-                <h2 class="section-title text-xl">📊 Recent Activity</h2>
+                <h2 class="section-title text-xl">📊 Past Orders</h2>
                 @foreach (var order in Model.OrderHistory.Take(2))
                 {
-                    <div class="order-item">
+                    <div class="order-item py-4 border-b border-gray-200 last:border-b-0">
                         <div class="flex justify-between items-start">
                             <div>
                                 <div class="font-semibold text-gray-800 mb-1">@order.ShopName</div>
@@ -168,15 +164,15 @@
                 {
                     <div class="text-center py-8 text-gray-500">
                         <div class="text-4xl mb-2">🍽️</div>
-                        <p>No recent activity to display</p>
+                        <p>No past orders to display</p>
                     </div>
                 }
             </div>
             <div class="glass-card p-6 rounded-2xl fade-in">
-                <h2 class="section-title text-xl">🔄 Current Orders</h2>
+                <h2 class="section-title text-xl">🔄 Today's Orders</h2>
                 @foreach (var order in Model.CurrentOrders)
                 {
-                    <div class="order-item">
+                    <div class="order-item py-4 border-b border-gray-200 last:border-b-0">
                         <div class="flex justify-between items-start">
                             <div>
                                 <div class="font-semibold text-gray-800 mb-1">@order.ShopName</div>
@@ -194,7 +190,7 @@
                 {
                     <div class="text-center py-8 text-gray-500">
                         <div class="text-4xl mb-2">📦</div>
-                        <p>No current orders</p>
+                        <p>No orders for today</p>
                     </div>
                 }
             </div>
@@ -206,12 +202,12 @@
             <div class="space-y-3">
                 @foreach (var order in Model.OrderHistory)
                 {
-                    <div class="order-item">
+                    <div class="order-item py-4 border-b border-gray-200 last:border-b-0">
                         <div class="flex justify-between items-center">
                             <div>
                                 <div class="font-semibold text-gray-800">@order.ShopName</div>
                                 <div class="text-sm text-gray-600">@order.ItemName</div>
-                                <div class="text-xs text-gray-500">@order.OrderDate.ToString("MMM dd, yyyy")</div>
+                                <div class="text-xs text-gray-500">@order.OrderDate.ToString("MMM dd, yyyy h:mm tt")</div>
                             </div>
                             <div class="font-bold text-lg text-gray-800">@order.Amount.ToString("C")</div>
                         </div>
@@ -227,69 +223,66 @@
                 }
             </div>
         </div>
-    </div>
 
-    <!-- Welcome Modal -->
-    <div id="welcomeModal" class="modal" style="display: @(Model.ShowWelcomeModal ? "block" : "none")">
-        <div class="modal-content">
-            <span class="close" onclick="closeWelcomeModal()">×</span>
-            <div class="text-center mb-6">
-                <div class="text-6xl mb-4">🎉</div>
-                <h2 class="text-2xl font-bold text-gray-800 mb-4">Welcome to Your Cafeteria!</h2>
+        <!-- Welcome Modal -->
+        <div id="welcomeModal" class="modal" style="display: @(Model.ShowWelcomeModal ? "block" : "none")">
+            <div class="modal-content">
+                <span class="close" onclick="closeWelcomeModal()">×</span>
+                <div class="text-center mb-6">
+                    <div class="text-6xl mb-4">🎉</div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Welcome to Your Cafeteria!</h2>
+                </div>
+                <p class="text-gray-600 mb-4">Enjoy our comprehensive employee benefit program. Deposit R250 monthly and receive additional company credit!</p>
+                <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                    <p class="text-gray-700 font-semibold mb-2">You can:</p>
+                    <ul class="space-y-1 text-gray-600">
+                        <li>• Manage your deposits seamlessly</li>
+                        <li>• Check your balance in real-time</li>
+                        <li>• Browse restaurant menus</li>
+                        <li>• Place and track orders</li>
+                    </ul>
+                </div>
+                <button class="btn w-full" onclick="closeWelcomeModal()">Get Started 🚀</button>
             </div>
-            <p class="text-gray-600 mb-4">Enjoy our comprehensive employee benefit program. Deposit R250 monthly and receive an additional R500 company credit!</p>
-            <div class="bg-gray-50 p-4 rounded-lg mb-4">
-                <p class="text-gray-700 font-semibold mb-2">You can:</p>
-                <ul class="space-y-1 text-gray-600">
-                    <li>• Manage your deposits seamlessly</li>
-                    <li>• Check your balance in real-time</li>
-                    <li>• Browse restaurant menus</li>
-                    <li>• Place and track orders</li>
-                </ul>
-            </div>
-            <button class="btn w-full" onclick="closeWelcomeModal()">Get Started 🚀</button>
         </div>
-    </div>
 
-   
-    <div id="depositModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeDepositModal()">×</span>
-            <div class="text-center mb-6">
-                <div class="text-4xl mb-2">💳</div>
-                <h2 class="text-2xl font-bold text-gray-800">Make a Deposit</h2>
-            </div>
-            <div id="depositMessage" class="hidden text-center mb-4"></div>
-            <div class="test-mode-toggle mb-4">
-                <label class="text-gray-600">
-                    <input type="checkbox" id="confirmPaymentAgreement" name="confirmPaymentAgreement">
-                    Confirm Payment Agreement (Required for Cash or Payroll Deduction)
-
-                </label>
-            </div>
-            <form id="DepForm" class="deposit-form">
-                <div class="form-group">
-                    <label asp-for="DepositAmount" class="control-label">Deposit Amount (Minimum R250)</label>
-                    <input asp-for="DepositAmount" id="DepositAmount" class="form-control" type="number" step="0.01" placeholder="250" min="250" required>
-                    <span id="DepositAmountError" class="text-red-500 text-sm"></span>
+        <!-- Deposit Modal -->
+        <div id="depositModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeDepositModal()">×</span>
+                <div class="text-center mb-6">
+                    <div class="text-4xl mb-2">💳</div>
+                    <h2 class="text-2xl font-bold text-gray-800">Make a Deposit</h2>
                 </div>
-                <div class="form-group">
-                    <label asp-for="PaymentMethod" class="control-label">Payment Method</label>
-                    <select asp-for="PaymentMethod" id="PaymentMethod" class="form-control" required>
-                        <option value="">Select a payment method</option>
-                        @foreach (var method in Model.PaymentMethods)
-                        {
-                            <option value="@method" selected="@(Model.PaymentMethod == method ? "selected" : null)">@method</option>
-                        }
-                    </select>
-                    <span id="PaymentMethodError" class="text-red-500 text-sm"></span>
+                <div id="depositMessage" class="hidden text-center mb-4"></div>
+                <div class="test-mode-toggle mb-4">
+                    <label class="text-gray-600">
+                        <input type="checkbox" id="confirmPaymentAgreement" name="confirmPaymentAgreement">
+                        Confirm Payment Agreement (Required for Cash or Payroll Deduction)
+                    </label>
                 </div>
-                <input type="hidden" asp-for="PaymentToken" id="PaymentToken">
-                @Html.AntiForgeryToken()
-                <input type="hidden" id="AntiForgeryToken" name="RequestVerificationToken" value="@Html.AntiForgeryToken()" />
-
-                <button type="button" id="SubmitBtn" class="btn w-full">Process Deposit</button>
-            </form>
+                <form id="DepForm" class="deposit-form">
+                    <div class="form-group">
+                        <label asp-for="DepositAmount" class="control-label">Deposit Amount (Minimum R250)</label>
+                        <input asp-for="DepositAmount" id="DepositAmount" class="form-control" type="number" step="0.01" placeholder="250" min="250" required>
+                        <span id="DepositAmountError" class="text-red-500 text-sm"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="PaymentMethod" class="control-label">Payment Method</label>
+                        <select asp-for="PaymentMethod" id="PaymentMethod" class="form-control" required>
+                            <option value="">Select a payment method</option>
+                            @foreach (var method in Model.PaymentMethods)
+                            {
+                                <option value="@method" selected="@(Model.PaymentMethod == method ? "selected" : null)">@method</option>
+                            }
+                        </select>
+                        <span id="PaymentMethodError" class="text-red-500 text-sm"></span>
+                    </div>
+                    <input type="hidden" asp-for="PaymentToken" id="PaymentToken">
+                    @Html.AntiForgeryToken()
+                    <button type="button" id="SubmitBtn" class="btn w-full">Process Deposit</button>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -314,7 +307,12 @@
 
         function closeWelcomeModal() {
             document.getElementById('welcomeModal').style.display = 'none';
-            fetch('/Dashboard/MarkWelcomeModalSeen', { method: 'POST' })
+            fetch('/Dashboard/MarkWelcomeModalSeen', {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                }
+            })
                 .then(response => response.json())
                 .then(data => console.log('Welcome modal marked as seen'))
                 .catch(error => console.error('Error:', error));
@@ -352,7 +350,13 @@
                 return;
             }
 
-            // Hide the modal before showing Yoco popup
+            if (['Cash', 'Payroll Deduction'].includes(paymentMethodField.value) && !document.getElementById('confirmPaymentAgreement').checked) {
+                depositMessage.classList.remove('hidden');
+                depositMessage.classList.add('text-red-500');
+                depositMessage.textContent = 'Please confirm the payment agreement for Cash or Payroll Deduction';
+                return;
+            }
+
             closeDepositModal();
             checkoutButton.disabled = true;
             checkoutButton.textContent = 'Processing...';
@@ -369,7 +373,6 @@
                     description: 'Deposit to your cafeteria account',
                     callback: function (result) {
                         if (result.error) {
-                            // Re-show modal on error
                             openDepositModal();
                             depositMessage.classList.remove('hidden');
                             depositMessage.classList.add('text-red-500');
@@ -387,7 +390,6 @@
 
         function submitDeposit() {
             const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
-
             const formData = {
                 DepositAmount: parseFloat(depositAmountField.value),
                 PaymentMethod: paymentMethodField.value,
@@ -403,7 +405,7 @@
                 body: JSON.stringify(formData)
             })
                 .then(response => {
-                    if (!response.ok) throw new Error("Network response was not OK");
+                    if (!response.ok) throw new Error('Network response was not OK');
                     return response.json();
                 })
                 .then(data => {
@@ -412,11 +414,10 @@
                         if (balanceMatch) {
                             document.querySelector('.balance-card .text-2xl').textContent = `R${balanceMatch[1]}`;
                         }
-                        // Redirect to the success view
-                        window.location.href = data.redirectUrl;
+                        window.location.href = data.redirectUrl || '/Home/Dashboard';
                     } else {
                         openDepositModal();
-                        depositMessage.classList.remove('hidden', 'text-green-500');
+                        depositMessage.classList.remove('hidden');
                         depositMessage.classList.add('text-red-500');
                         depositMessage.textContent = data.message || (data.errors ? data.errors.join(' ') : 'An error occurred. Please try again.');
                         checkoutButton.disabled = false;
@@ -425,68 +426,21 @@
                 })
                 .catch(error => {
                     openDepositModal();
-                    depositMessage.classList.remove('hidden', 'text-green-500');
+                    depositMessage.classList.remove('hidden');
                     depositMessage.classList.add('text-red-500');
                     depositMessage.textContent = 'Error: ' + error.message;
                     checkoutButton.disabled = false;
                     checkoutButton.textContent = 'Process Deposit';
                 });
         }
-        // Check for openDeposit query parameter on page load
+
         document.addEventListener('DOMContentLoaded', function () {
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('openDeposit') === 'true') {
                 openDepositModal();
-                // Optionally, clear the query parameter from the URL for a cleaner look
                 window.history.replaceState({}, document.title, '/Home/Dashboard');
             }
         });
-
-        // function submitDeposit() {
-        //     const formData = {
-        //         DepositAmount: parseFloat(depositAmountField.value),
-        //         PaymentMethod: paymentMethodField.value,
-        //         PaymentToken: paymentTokenField.value,
-        //         __RequestVerificationToken: document.querySelector('#AntiForgeryToken').value
-        //     };
-
-        //     fetch('/Deposit', {
-        //         method: 'POST',
-        //         headers: {
-        //             'Content-Type': 'application/json',
-        //             'RequestVerificationToken': formData.__RequestVerificationToken
-        //         },
-        //         body: JSON.stringify(formData)
-        //     })
-        //         .then(response => response.json())
-        //         .then(data => {
-        //             if (data.success) {
-        //                 // Update balance display and keep modal hidden
-        //                 const balanceMatch = data.message.match(/New balance: R([\d.]+)/);
-        //                 if (balanceMatch) {
-        //                     document.querySelector('.balance-card .text-2xl').textContent = `R${balanceMatch[1]}`;
-        //                 }
-        //                 // No modal re-display on success
-        //             } else {
-        //                 // Re-show modal on error
-        //                 openDepositModal();
-        //                 depositMessage.classList.remove('hidden');
-        //                 depositMessage.classList.add('text-red-500');
-        //                 depositMessage.textContent = data.message || data.errors?.join(' ') || 'An error occurred. Please try again.';
-        //                 checkoutButton.disabled = false;
-        //                 checkoutButton.textContent = 'Process Deposit';
-        //             }
-        //         })
-        //         .catch(error => {
-        //             // Re-show modal on error
-        //             openDepositModal();
-        //             depositMessage.classList.remove('hidden');
-        //             depositMessage.classList.add('text-red-500');
-        //             depositMessage.textContent = 'Error: ' + error.message;
-        //             checkoutButton.disabled = false;
-        //             checkoutButton.textContent = 'Process Deposit';
-        //         });
-        // }
     </script>
 </body>
 </html>

@@ -27,6 +27,7 @@ namespace BraamBowlApp.Models
 
         public List<string> PaymentMethods => new List<string> { "Bank Transfer", "Payroll Deduction", "Credit Card" };
         public string PaymentToken { get; set; }
+        public string OrderId { get; set; }
 
     }
 
@@ -37,6 +38,7 @@ namespace BraamBowlApp.Models
         public string ShopName { get; set; }
         public string Type { get; set; } // Not in DB; we'll map based on data or add to Shops table
         public List<MenuItem> MenuItems { get; set; } = new List<MenuItem>();
+        public string OrderId { get; set; }
     }
 
     public class MenuItemView
@@ -45,6 +47,7 @@ namespace BraamBowlApp.Models
         public string Name { get; set; }
         public string Category { get; set; }
         public decimal Price { get; set; }
+        public string OrderId { get; set; }
     }
 
     public class OrderView
@@ -53,6 +56,7 @@ namespace BraamBowlApp.Models
         public string ItemName { get; set; }
         public string ShopName { get; set; }
         public decimal Amount { get; set; }
+        public string OrderId { get; set; }
     }
 
     public class CurrentOrder
@@ -75,5 +79,6 @@ namespace BraamBowlApp.Models
         public List<string> PaymentMethods => new List<string> { "Bank Transfer", "Payroll Deduction", "Credit Card" };
 
         public string PaymentToken { get; set; }
+
     }
 }

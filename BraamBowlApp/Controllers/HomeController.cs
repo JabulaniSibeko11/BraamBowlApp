@@ -53,27 +53,30 @@ namespace BraamBowlApp.Controllers
                 {
                     await connection.OpenAsync();
 
-                    // Fetch user balance
-                    string userQuery = @"
-                SELECT Balance
-                FROM AspNetUsers
-                WHERE Id = @UserId";
-                    using (var userCommand = new SqlCommand(userQuery, connection))
+                    // Call stored procedure to fetch user balance
+                    using (var command = new SqlCommand("sp_GetUserBalance", connection))
                     {
-                        userCommand.Parameters.AddWithValue("@UserId", userId);
-                        using (var reader = await userCommand.ExecuteReaderAsync())
+                        command.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        // Input parameter
+                        command.Parameters.AddWithValue("@UserId", userId);
+
+                        // Output parameter
+                        var balanceParam = new SqlParameter("@Balance", System.Data.SqlDbType.Decimal)
                         {
-                            if (await reader.ReadAsync())
-                            {
-                                int balanceIndex = reader.GetOrdinal("Balance");
-                                model.Balance = reader.IsDBNull(balanceIndex) ? 0 : reader.GetDecimal(balanceIndex);
-                            }
-                            else
-                            {
-                                TempData["ErrorMessage"] = "User not found. Please log in.";
-                                return RedirectToAction("Login", "Account");
-                            }
-                        }
+                            Direction = System.Data.ParameterDirection.Output,
+                            Precision = 18,
+                            Scale = 2
+                        };
+                        command.Parameters.Add(balanceParam);
+
+                        // Execute and get return value
+                        await command.ExecuteNonQueryAsync();
+
+                        // Check return value
+                        
+                        // Get balance from output parameter
+                        model.Balance = balanceParam.Value == DBNull.Value ? 0 : (decimal)balanceParam.Value;
                     }
                 }
 
@@ -182,187 +185,7 @@ namespace BraamBowlApp.Controllers
             }
         }
 
-            [HttpGet]
-        public async Task<IActionResult> Dashboard1()
-        {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
-                TempData["ErrorMessage"] = "User not authenticated.";
-                return RedirectToAction("Login", "Account");
-            }
 
-            string connectionString = _config.GetConnectionString("DefaultConnection");
-            var model = new DashboardViewModel
-            {
-                Restuarant = new List<Restuarants>(),
-                OrderHistory = new List<OrderView>(),
-                CurrentOrders = new List<CurrentOrder>()
-            };
-
-            try
-            {
-                using (var connection = new SqlConnection(connectionString))
-                {
-                    await connection.OpenAsync();
-
-                    // Fetch user data
-                    string userQuery = @"
-                    SELECT Employee_ID, Balance, Monthly_Deposit_Total, Last_Deposit_Month, HasSeenWelcomeModal 
-                    FROM AspNetUsers 
-                    WHERE Id = @UserId";
-                    using (var userCommand = new SqlCommand(userQuery, connection))
-                    {
-                        userCommand.Parameters.AddWithValue("@UserId", userId);
-                        using (var reader = await userCommand.ExecuteReaderAsync())
-                        {
-                            if (await reader.ReadAsync())
-                            {
-                                int employeeIdIndex = reader.GetOrdinal("Employee_ID");
-                                if (!reader.IsDBNull(employeeIdIndex))
-                                {
-                                    model.EmployeeId = reader.GetInt32(employeeIdIndex);
-                                }
-                                else
-                                {
-                                    TempData["ErrorMessage"] = "Employee ID not found for user.";
-                                    return RedirectToAction("Login", "Account");
-                                }
-
-                                int balanceIndex = reader.GetOrdinal("Balance");
-                                model.Balance = reader.IsDBNull(balanceIndex) ? 0 : reader.GetDecimal(balanceIndex);
-
-                                int monthlyDepositIndex = reader.GetOrdinal("Monthly_Deposit_Total");
-                                model.MonthlyDeposits = reader.IsDBNull(monthlyDepositIndex) ? 0 : reader.GetDecimal(monthlyDepositIndex);
-
-                                int lastDepositDateIndex = reader.GetOrdinal("Last_Deposit_Month");
-                                model.LastDepositDate = reader.IsDBNull(lastDepositDateIndex) ? null : reader.GetDateTime(lastDepositDateIndex);
-
-                                int hasSeenModalIndex = reader.GetOrdinal("HasSeenWelcomeModal");
-                                model.ShowWelcomeModal = reader.IsDBNull(hasSeenModalIndex) ? true : !reader.GetBoolean(hasSeenModalIndex);
-
-                                model.LastDepositAmount = model.MonthlyDeposits;
-                            }
-                            else
-                            {
-                                TempData["ErrorMessage"] = "User not found.";
-                                return Unauthorized();
-                            }
-                        }
-                    }
-
-                    // Fetch shops and menu items in a single query
-                    string shopMenuQuery = @"
-                    SELECT s.Shop_ID, s.Shop_Name, m.MenuItem_ID, m.Item_Name, m.Category, m.Price
-_DEPS_                    FROM Shops s
-                    LEFT JOIN MenuItems m ON s.Shop_ID = m.Shop_ID
-                    WHERE s.IsActive = 1
-                    ORDER BY s.Shop_ID";
-                    using (var command = new SqlCommand(shopMenuQuery, connection))
-                    {
-                        using (var reader = await command.ExecuteReaderAsync())
-                        {
-                            var restaurantDict = new Dictionary<int, Restuarants>();
-                            while (await reader.ReadAsync())
-                            {
-                                int shopId = reader.GetInt32(reader.GetOrdinal("Shop_ID"));
-                                if (!restaurantDict.ContainsKey(shopId))
-                                {
-                                    restaurantDict[shopId] = new Restuarants
-                                    {
-                                        ShopId = shopId,
-                                        ShopName = reader.GetString(reader.GetOrdinal("Shop_Name")),
-                                        MenuItems = new List<MenuItem>()
-                                    };
-                                }
-
-                                if (!reader.IsDBNull(reader.GetOrdinal("MenuItem_ID")))
-                                {
-                                    restaurantDict[shopId].MenuItems.Add(new MenuItem
-                                    {
-                                        MenuItem_ID = reader.GetInt32(reader.GetOrdinal("MenuItem_ID")),
-                                        Item_Name = reader.GetString(reader.GetOrdinal("Item_Name")),
-                                        Category = reader.IsDBNull(reader.GetOrdinal("Category")) ? null : reader.GetString(reader.GetOrdinal("Category")),
-                                        Price = reader.GetDecimal(reader.GetOrdinal("Price"))
-                                    });
-                                }
-                            }
-                            model.Restuarant = restaurantDict.Values.ToList();
-                        }
-                    }
-
-                    // Fetch order history
-                    string orderHistoryQuery = @"
-                    SELECT o.Order_ID, o.Order_Date, s.Shop_Name, oi.Quantity, m.Item_Name, oi.UnitPriceAtTimeOfOrder
-                    FROM Orders o
-                    JOIN OrderItems oi ON o.Order_ID = oi.Order_ID
-                    JOIN MenuItems m ON oi.MenuItem_ID = m.MenuItem_ID
-                    JOIN Shops s ON o.Shop_ID = s.Shop_ID
-                    WHERE o.Employee_ID = @EmployeeId";
-                    using (var orderCommand = new SqlCommand(orderHistoryQuery, connection))
-                    {
-                        orderCommand.Parameters.AddWithValue("@EmployeeId", model.EmployeeId);
-                        using (var reader = await orderCommand.ExecuteReaderAsync())
-                        {
-                            while (await reader.ReadAsync())
-                            {
-                                model.OrderHistory.Add(new OrderView
-                                {
-                                    OrderDate = reader.GetDateTime(reader.GetOrdinal("Order_Date")),
-                                    ItemName = reader.GetString(reader.GetOrdinal("Item_Name")),
-                                    ShopName = reader.GetString(reader.GetOrdinal("Shop_Name")),
-                                    Amount = reader.GetInt32(reader.GetOrdinal("Quantity")) * reader.GetDecimal(reader.GetOrdinal("UnitPriceAtTimeOfOrder"))
-                                });
-                            }
-                        }
-                    }
-
-                    // Fetch current orders
-                    string currentOrderQuery = @"
-                    SELECT o.Order_ID, o.Order_Date, s.Shop_Name, o.Status, m.Item_Name
-                    FROM Orders o
-                    JOIN OrderItems oi ON o.Order_ID = oi.Order_ID
-                    JOIN MenuItems m ON oi.MenuItem_ID = m.MenuItem_ID
-                    JOIN Shops s ON o.Shop_ID = s.Shop_ID
-                    WHERE o.Employee_ID = @EmployeeId
-                    AND o.Status IN ('Pending', 'Preparing')";
-                    using (var currentOrderCommand = new SqlCommand(currentOrderQuery, connection))
-                    {
-                        currentOrderCommand.Parameters.AddWithValue("@EmployeeId", model.EmployeeId);
-                        using (var reader = await currentOrderCommand.ExecuteReaderAsync())
-                        {
-                            while (await reader.ReadAsync())
-                            {
-                                model.CurrentOrders.Add(new CurrentOrder
-                                {
-                                    OrderId = reader.GetInt32(reader.GetOrdinal("Order_ID")).ToString(),
-                                    ItemName = reader.GetString(reader.GetOrdinal("Item_Name")),
-                                    ShopName = reader.GetString(reader.GetOrdinal("Shop_Name")),
-                                    Status = reader.GetString(reader.GetOrdinal("Status")),
-                                    EstimatedDeliveryMinutes = 15 // Static for demo; calculate dynamically if needed
-                                });
-                            }
-                        }
-                    }
-                }
-
-                // Calculate stats
-                model.TotalDeposited = model.MonthlyDeposits;
-                model.CompanyMatch = model.MonthlyDeposits * 2;
-                model.TotalSpent = model.OrderHistory.Sum(o => o.Amount);
-                model.OrdersPlaced = model.OrderHistory.Count;
-                model.MonthlyCompanyMatch = model.MonthlyDeposits * 2;
-                model.AverageOrderAmount = model.OrderHistory.Any() ? model.OrderHistory.Average(o => o.Amount) : 0;
-
-                return View(model);
-            }
-            catch (Exception ex)
-            {
-                // Log the exception (implement logging as needed, e.g., using ILogger)
-                TempData["ErrorMessage"] = $"An error occurred while loading the dashboard: {ex.Message}";
-                return View(model); // Return partial model to avoid complete failure
-            }
-        }
 
 
         [HttpGet]
@@ -393,60 +216,41 @@ _DEPS_                    FROM Shops s
                     await connection.OpenAsync();
 
                     // Fetch user data
-                    string userQuery = @"
-                SELECT Employee_ID, Balance, Monthly_Deposit_Total, Last_Deposit_Month, HasSeenWelcomeModal 
-                FROM AspNetUsers 
-                WHERE Id = @UserId";
-                    using (var userCommand = new SqlCommand(userQuery, connection))
+                    using (var userCommand = new SqlCommand("sp_GetUserDashboardData", connection))
                     {
+                        userCommand.CommandType = System.Data.CommandType.StoredProcedure;
                         userCommand.Parameters.AddWithValue("@UserId", userId);
-                        using (var reader = await userCommand.ExecuteReaderAsync())
+
+                        // Output parameters
+                        var employeeIdParam = new SqlParameter("@EmployeeId", System.Data.SqlDbType.Int) { Direction = System.Data.ParameterDirection.Output };
+                        var balanceParam = new SqlParameter("@Balance", System.Data.SqlDbType.Decimal) { Direction = System.Data.ParameterDirection.Output, Precision = 18, Scale = 2 };
+                        var monthlyDepositParam = new SqlParameter("@MonthlyDepositTotal", System.Data.SqlDbType.Decimal) { Direction = System.Data.ParameterDirection.Output, Precision = 18, Scale = 2 };
+                        var lastDepositMonthParam = new SqlParameter("@LastDepositMonth", System.Data.SqlDbType.DateTime) { Direction = System.Data.ParameterDirection.Output };
+                        var hasSeenModalParam = new SqlParameter("@HasSeenWelcomeModal", System.Data.SqlDbType.Bit) { Direction = System.Data.ParameterDirection.Output };
+
+                        userCommand.Parameters.AddRange(new[] { employeeIdParam, balanceParam, monthlyDepositParam, lastDepositMonthParam, hasSeenModalParam });
+
+                        await userCommand.ExecuteNonQueryAsync();
+
+                        if (employeeIdParam.Value == DBNull.Value)
                         {
-                            if (await reader.ReadAsync())
-                            {
-                                int employeeIdIndex = reader.GetOrdinal("Employee_ID");
-                                if (!reader.IsDBNull(employeeIdIndex))
-                                {
-                                    model.EmployeeId = reader.GetInt32(employeeIdIndex);
-                                }
-                                else
-                                {
-                                    TempData["ErrorMessage"] = "Employee ID not found for user.";
-                                    return RedirectToAction("Login", "Account");
-                                }
-
-                                int balanceIndex = reader.GetOrdinal("Balance");
-                                model.Balance = reader.IsDBNull(balanceIndex) ? 0 : reader.GetDecimal(balanceIndex);
-
-                                int monthlyDepositIndex = reader.GetOrdinal("Monthly_Deposit_Total");
-                                model.MonthlyDeposits = reader.IsDBNull(monthlyDepositIndex) ? 0 : reader.GetDecimal(monthlyDepositIndex);
-
-                                int lastDepositDateIndex = reader.GetOrdinal("Last_Deposit_Month");
-                                model.LastDepositDate = reader.IsDBNull(lastDepositDateIndex) ? null : reader.GetDateTime(lastDepositDateIndex);
-
-                                int hasSeenModalIndex = reader.GetOrdinal("HasSeenWelcomeModal");
-                                model.ShowWelcomeModal = reader.IsDBNull(hasSeenModalIndex) ? true : !reader.GetBoolean(hasSeenModalIndex);
-
-                                model.LastDepositAmount = model.MonthlyDeposits;
-                            }
-                            else
-                            {
-                                TempData["ErrorMessage"] = "User not found.";
-                                return RedirectToAction("Login", "Account");
-                            }
+                            TempData["ErrorMessage"] = "Employee ID not found for user.";
+                            return RedirectToAction("Login", "Account");
                         }
+
+                        model.EmployeeId = (int)employeeIdParam.Value;
+                        model.Balance = balanceParam.Value == DBNull.Value ? 0 : (decimal)balanceParam.Value;
+                        model.MonthlyDeposits = monthlyDepositParam.Value == DBNull.Value ? 0 : (decimal)monthlyDepositParam.Value;
+                        model.LastDepositDate = lastDepositMonthParam.Value == DBNull.Value ? null : (DateTime?)lastDepositMonthParam.Value;
+                        model.ShowWelcomeModal = hasSeenModalParam.Value == DBNull.Value ? true : !(bool)hasSeenModalParam.Value;
+                        model.LastDepositAmount = model.MonthlyDeposits;
                     }
 
                     // Fetch shops and menu items
-                    string shopMenuQuery = @"
-                SELECT s.Shop_ID, s.Shop_Name, m.MenuItem_ID, m.Item_Name, m.Category, m.Price
-                FROM Shops s
-                LEFT JOIN MenuItems m ON s.Shop_ID = m.Shop_ID
-                WHERE s.IsActive = 1
-                ORDER BY s.Shop_ID";
-                    using (var command = new SqlCommand(shopMenuQuery, connection))
+                    using (var shopCommand = new SqlCommand("sp_GetShopsAndMenuItems", connection))
                     {
-                        using (var reader = await command.ExecuteReaderAsync())
+                        shopCommand.CommandType = System.Data.CommandType.StoredProcedure;
+                        using (var reader = await shopCommand.ExecuteReaderAsync())
                         {
                             var restaurantDict = new Dictionary<int, Restuarants>();
                             while (await reader.ReadAsync())
@@ -478,16 +282,9 @@ _DEPS_                    FROM Shops s
                     }
 
                     // Fetch order history
-                    string orderHistoryQuery = @"
-                SELECT o.Order_ID, o.Order_Date, s.Shop_Name, oi.Quantity, m.Item_Name, oi.UnitPriceAtTimeOfOrder
-                FROM Orders o
-                JOIN OrderItems oi ON o.Order_ID = oi.Order_ID
-                JOIN MenuItems m ON oi.MenuItem_ID = m.MenuItem_ID
-                JOIN Shops s ON o.Shop_ID = s.Shop_ID
-                WHERE o.Employee_ID = @EmployeeId
-                ORDER BY o.Order_Date DESC";
-                    using (var orderCommand = new SqlCommand(orderHistoryQuery, connection))
+                    using (var orderCommand = new SqlCommand("sp_GetOrderHistory", connection))
                     {
+                        orderCommand.CommandType = System.Data.CommandType.StoredProcedure;
                         orderCommand.Parameters.AddWithValue("@EmployeeId", model.EmployeeId);
                         using (var reader = await orderCommand.ExecuteReaderAsync())
                         {
@@ -498,24 +295,16 @@ _DEPS_                    FROM Shops s
                                     OrderDate = reader.GetDateTime(reader.GetOrdinal("Order_Date")),
                                     ItemName = reader.GetString(reader.GetOrdinal("Item_Name")),
                                     ShopName = reader.GetString(reader.GetOrdinal("Shop_Name")),
-                                    Amount = reader.GetInt32(reader.GetOrdinal("Quantity")) * reader.GetDecimal(reader.GetOrdinal("UnitPriceAtTimeOfOrder"))
+                                    Amount = reader.GetDecimal(reader.GetOrdinal("Amount"))
                                 });
                             }
                         }
                     }
 
                     // Fetch current orders
-                    string currentOrderQuery = @"
-                SELECT o.Order_ID, o.Order_Date, s.Shop_Name, o.Status, m.Item_Name
-                FROM Orders o
-                JOIN OrderItems oi ON o.Order_ID = oi.Order_ID
-                JOIN MenuItems m ON oi.MenuItem_ID = m.MenuItem_ID
-                JOIN Shops s ON o.Shop_ID = s.Shop_ID
-                WHERE o.Employee_ID = @EmployeeId
-                AND o.Status IN ('Pending', 'Preparing')
-                ORDER BY o.Order_Date DESC";
-                    using (var currentOrderCommand = new SqlCommand(currentOrderQuery, connection))
+                    using (var currentOrderCommand = new SqlCommand("sp_GetCurrentOrders", connection))
                     {
+                        currentOrderCommand.CommandType = System.Data.CommandType.StoredProcedure;
                         currentOrderCommand.Parameters.AddWithValue("@EmployeeId", model.EmployeeId);
                         using (var reader = await currentOrderCommand.ExecuteReaderAsync())
                         {
@@ -534,13 +323,9 @@ _DEPS_                    FROM Shops s
                     }
 
                     // Fetch deposits
-                    string depositQuery = @"
-                SELECT DepositAmount, PaymentMethod, DepositDate
-                FROM Deposits
-                WHERE Employee_ID = @EmployeeId
-                ORDER BY DepositDate DESC";
-                    using (var depositCommand = new SqlCommand(depositQuery, connection))
+                    using (var depositCommand = new SqlCommand("sp_GetDeposits", connection))
                     {
+                        depositCommand.CommandType = System.Data.CommandType.StoredProcedure;
                         depositCommand.Parameters.AddWithValue("@EmployeeId", model.EmployeeId);
                         using (var reader = await depositCommand.ExecuteReaderAsync())
                         {
@@ -549,25 +334,29 @@ _DEPS_                    FROM Shops s
                                 model.depositModels.Add(new Deposit
                                 {
                                     DepositAmount = reader.GetDecimal(reader.GetOrdinal("DepositAmount")),
-                                    PaymentMethod = reader.GetString(reader.GetOrdinal("PaymentMethod")),
-                                    // Assuming Deposit model needs to be extended if DepositDate is required
+                                    PaymentMethod = reader.GetString(reader.GetOrdinal("Payment_Method")),
                                 });
+
+                                if (!reader.IsDBNull(reader.GetOrdinal("CompanyCredit")))
+                                {
+                                    model.CompanyMatch += reader.GetDecimal(reader.GetOrdinal("CompanyCredit"));
+                                }
                             }
                         }
                     }
+
+                    // Calculate stats
+                    model.TotalDeposited = model.depositModels.Sum(d => d.DepositAmount);
+                    model.MonthlyCompanyMatch = model.MonthlyDeposits * 2;
+                    model.TotalSpent = model.OrderHistory.Sum(o => o.Amount);
+                    model.OrdersPlaced = model.CurrentOrders.Count; // Today's orders
+                    model.AverageOrderAmount = model.CurrentOrders.Any() ?
+                        model.CurrentOrders.Average(o => model.OrderHistory.FirstOrDefault(h => h.OrderId == o.OrderId)?.Amount ?? 0) : 0;
+                    model.DepositAmount = model.depositModels.Any() ? model.depositModels.First().DepositAmount : 0;
+                    model.PaymentMethod = model.depositModels.Any() ? model.depositModels.First().PaymentMethod : null;
+
+                    return View(model);
                 }
-
-                // Calculate stats
-                model.TotalDeposited = model.depositModels.Sum(d => d.DepositAmount);
-                model.CompanyMatch = model.TotalDeposited * 2;
-                model.TotalSpent = model.OrderHistory.Sum(o => o.Amount); // Ensure this reflects all orders
-                model.OrdersPlaced = model.OrderHistory.Count;
-                model.MonthlyCompanyMatch = model.MonthlyDeposits * 2;
-                model.AverageOrderAmount = model.OrderHistory.Any() ? model.OrderHistory.Average(o => o.Amount) : 0;
-                model.DepositAmount = model.depositModels.Any() ? model.depositModels.First().DepositAmount : 0;
-                model.PaymentMethod = model.depositModels.Any() ? model.depositModels.First().PaymentMethod : null;
-
-                return View(model);
             }
             catch (Exception ex)
             {
@@ -575,9 +364,8 @@ _DEPS_                    FROM Shops s
                 return View(model);
             }
         }
-
-
-        [HttpPost]
+    
+    [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AcknowledgeWelcome()
         {
@@ -623,7 +411,7 @@ _DEPS_                    FROM Shops s
         }
 
 
-        
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -645,139 +433,107 @@ _DEPS_                    FROM Shops s
             using (var connection = new SqlConnection(connectionString))
             {
                 await connection.OpenAsync();
-                using (var transaction = connection.BeginTransaction())
+
+                try
                 {
-                    try
+                    // Retrieve user data
+                    using (var selectCommand = new SqlCommand("sp_GetUserDepositData", connection))
                     {
-                        // Retrieve user data
-                        string selectQuery = "SELECT Employee_ID, Monthly_Deposit_Total, Last_Deposit_Month, Balance FROM AspNetUsers WHERE Id = @UserId";
-                        using (var selectCommand = new SqlCommand(selectQuery, connection, transaction))
+                        selectCommand.CommandType = System.Data.CommandType.StoredProcedure;
+                        selectCommand.Parameters.AddWithValue("@UserId", userId);
+
+                        // Output parameters
+                        var employeeIdParam = new SqlParameter("@EmployeeId", System.Data.SqlDbType.Int) { Direction = System.Data.ParameterDirection.Output };
+                        var monthlyDepositParam = new SqlParameter("@MonthlyDepositTotal", System.Data.SqlDbType.Decimal) { Direction = System.Data.ParameterDirection.Output, Precision = 18, Scale = 2 };
+                        var lastDepositMonthParam = new SqlParameter("@LastDepositMonth", System.Data.SqlDbType.DateTime) { Direction = System.Data.ParameterDirection.Output };
+                        var balanceParam = new SqlParameter("@Balance", System.Data.SqlDbType.Decimal) { Direction = System.Data.ParameterDirection.Output, Precision = 18, Scale = 2 };
+
+                        selectCommand.Parameters.AddRange(new[] { employeeIdParam, monthlyDepositParam, lastDepositMonthParam, balanceParam });
+
+                        await selectCommand.ExecuteNonQueryAsync();
+
+                        
+
+                        if (employeeIdParam.Value == DBNull.Value)
                         {
-                            selectCommand.Parameters.AddWithValue("@UserId", userId);
-                            using (var reader = await selectCommand.ExecuteReaderAsync())
-                            {
-                                if (!await reader.ReadAsync())
-                                {
-                                    transaction.Rollback();
-                                    return Json(new { success = false, message = "User not found." });
-                                }
-
-                                int? employeeId = reader.IsDBNull(reader.GetOrdinal("Employee_ID")) ? (int?)null : reader.GetInt32(reader.GetOrdinal("Employee_ID"));
-                                decimal? monthlyDepositTotal = reader.IsDBNull(reader.GetOrdinal("Monthly_Deposit_Total")) ? (decimal?)null : reader.GetDecimal(reader.GetOrdinal("Monthly_Deposit_Total"));
-                                DateTime? lastDepositMonth = reader.IsDBNull(reader.GetOrdinal("Last_Deposit_Month")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("Last_Deposit_Month"));
-                                decimal? balance = reader.IsDBNull(reader.GetOrdinal("Balance")) ? (decimal?)null : reader.GetDecimal(reader.GetOrdinal("Balance"));
-
-                                if (employeeId == null)
-                                {
-                                    transaction.Rollback();
-                                    return Json(new { success = false, message = "Employee ID not found." });
-                                }
-
-                                // Validate deposit amount
-                                if (model.DepositAmount <= 0)
-                                {
-                                    transaction.Rollback();
-                                    return Json(new { success = false, message = "The Deposit Amount must be positive." });
-                                }
-
-                                // Check payment method
-                                if (string.IsNullOrEmpty(model.PaymentMethod))
-                                {
-                                    transaction.Rollback();
-                                    return Json(new { success = false, message = "Please select a payment method." });
-                                }
-
-                                // Handle current month logic
-                                var currentMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
-                                if (lastDepositMonth == null || lastDepositMonth < currentMonth)
-                                {
-                                    monthlyDepositTotal = 0;
-                                    lastDepositMonth = currentMonth;
-                                }
-
-                                var previousTotal = monthlyDepositTotal ?? 0;
-                                var newTotal = previousTotal + model.DepositAmount;
-
-                                var previousBonusAmount = (int)Math.Floor(previousTotal / 250);
-                                var newBonusAmount = (int)Math.Floor(newTotal / 250);
-                                var companyCredit = (newBonusAmount - previousBonusAmount) * 500m;
-
-                                // Update balance (add to existing balance instead of overwriting)
-                                balance = (balance ?? 0) + model.DepositAmount + companyCredit;
-
-                                // Close reader before executing updates
-                                reader.Close();
-
-                                // Verify payment token (mock or real)
-                                //if (string.IsNullOrEmpty(model.PaymentToken) || (!model.PaymentToken.StartsWith("mock_token_") && !await VerifyYocoPayment(model.PaymentToken, model.DepositAmount)))
-                                //{
-                                //    transaction.Rollback();
-                                //    return Json(new { success = false, message = "Payment verification failed. Please try again or use a valid payment method." });
-                                //}
-
-                                //if (string.IsNullOrEmpty(model.PaymentToken) || (/*!model.PaymentToken.StartsWith("mock_token_") &&*/  !await VerifyYocoPayment(model.PaymentToken, model.DepositAmount)))
-                                //{
-                                //    transaction.Rollback();
-                                //    return Json(new { success = false, message = "Payment verification failed. Please try again or use a valid payment method." });
-                                //}
-
-                                // Update user data
-                                string updateQuery = @"
-                            UPDATE AspNetUsers 
-                            SET Monthly_Deposit_Total = @NewTotal, 
-                                Last_Deposit_Month = @LastDepositMonth, 
-                                Balance = @Balance 
-                            WHERE Id = @UserId";
-                                using (var updateCommand = new SqlCommand(updateQuery, connection, transaction))
-                                {
-                                    updateCommand.Parameters.AddWithValue("@NewTotal", (object)newTotal ?? DBNull.Value);
-                                    updateCommand.Parameters.AddWithValue("@LastDepositMonth", (object)lastDepositMonth ?? DBNull.Value);
-                                    updateCommand.Parameters.AddWithValue("@Balance", (object)balance ?? DBNull.Value);
-                                    updateCommand.Parameters.AddWithValue("@UserId", userId);
-                                    await updateCommand.ExecuteNonQueryAsync();
-                                }
-
-                                // Log payment
-                                string insertQuery = @"
-                            INSERT INTO Payments (Employee_ID, DepositAmount, CompanyCredit, Payment_Method, Payment_Date, IsSuccessful)
-                            VALUES (@EmployeeId, @DepositAmount, @CompanyCredit, @PaymentMethod, @PaymentDate, @IsSuccessful)";
-                                using (var insertCommand = new SqlCommand(insertQuery, connection, transaction))
-                                {
-                                    insertCommand.Parameters.AddWithValue("@EmployeeId", employeeId);
-                                    insertCommand.Parameters.AddWithValue("@DepositAmount", model.DepositAmount);
-                                    insertCommand.Parameters.AddWithValue("@CompanyCredit", companyCredit);
-                                    insertCommand.Parameters.AddWithValue("@PaymentMethod", model.PaymentMethod);
-                                    insertCommand.Parameters.AddWithValue("@PaymentDate", DateTime.Now);
-                                    insertCommand.Parameters.AddWithValue("@IsSuccessful", true);
-                                    await insertCommand.ExecuteNonQueryAsync();
-                                }
-
-                                transaction.Commit();
-                                var successUrl = Url.Action("DepositSuccess", "Home", new
-                                {
-                                    DepositAmount = model.DepositAmount,
-                                    CompanyCredit = companyCredit,
-                                    NewBalance = balance
-                                });
-                                return Json(new
-                                {
-                                    success = true,
-                                    redirectUrl = successUrl,
-                                    message = $"Successfully deposited R{model.DepositAmount:F2}. Company added R{companyCredit:F2}. New balance: R{balance:F2}."
-                                });
-                            }
+                            return Json(new { success = false, message = "Employee ID not found." });
                         }
+
+                        int employeeId = (int)employeeIdParam.Value;
+                        decimal? monthlyDepositTotal = monthlyDepositParam.Value == DBNull.Value ? (decimal?)null : (decimal)monthlyDepositParam.Value;
+                        DateTime? lastDepositMonth = lastDepositMonthParam.Value == DBNull.Value ? (DateTime?)null : (DateTime)lastDepositMonthParam.Value;
+                        decimal? balance = balanceParam.Value == DBNull.Value ? (decimal?)null : (decimal)balanceParam.Value;
+
+                        // Validate deposit amount
+                        if (model.DepositAmount <= 0)
+                        {
+                            return Json(new { success = false, message = "The Deposit Amount must be positive." });
+                        }
+
+                        // Check payment method
+                        if (string.IsNullOrEmpty(model.PaymentMethod))
+                        {
+                            return Json(new { success = false, message = "Please select a payment method." });
+                        }
+
+                        // Handle current month logic
+                        var currentMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+                        if (lastDepositMonth == null || lastDepositMonth < currentMonth)
+                        {
+                            monthlyDepositTotal = 0;
+                            lastDepositMonth = currentMonth;
+                        }
+
+                        var previousTotal = monthlyDepositTotal ?? 0;
+                        var newTotal = previousTotal + model.DepositAmount;
+
+                        var previousBonusAmount = (int)Math.Floor(previousTotal / 250);
+                        var newBonusAmount = (int)Math.Floor(newTotal / 250);
+                        var companyCredit = (newBonusAmount - previousBonusAmount) * 500m;
+
+                        // Update balance
+                        balance = (balance ?? 0) + model.DepositAmount + companyCredit;
+
+                        // Process deposit and log payment
+                        using (var processCommand = new SqlCommand("sp_ProcessDeposit", connection))
+                        {
+                            processCommand.CommandType = System.Data.CommandType.StoredProcedure;
+                            processCommand.Parameters.AddWithValue("@UserId", userId);
+                            processCommand.Parameters.AddWithValue("@EmployeeId", employeeId);
+                            processCommand.Parameters.AddWithValue("@NewTotal", newTotal);
+                            processCommand.Parameters.AddWithValue("@LastDepositMonth", lastDepositMonth);
+                            processCommand.Parameters.AddWithValue("@Balance", balance);
+                            processCommand.Parameters.AddWithValue("@DepositAmount", model.DepositAmount);
+                            processCommand.Parameters.AddWithValue("@CompanyCredit", companyCredit);
+                            processCommand.Parameters.AddWithValue("@PaymentMethod", model.PaymentMethod);
+                            processCommand.Parameters.AddWithValue("@PaymentDate", DateTime.Now);
+
+                            await processCommand.ExecuteNonQueryAsync();
+
+                           
+                        }
+
+                        var successUrl = Url.Action("DepositSuccess", "Home", new
+                        {
+                            DepositAmount = model.DepositAmount,
+                            CompanyCredit = companyCredit,
+                            NewBalance = balance
+                        });
+                        return Json(new
+                        {
+                            success = true,
+                            redirectUrl = successUrl,
+                            message = $"Successfully deposited R{model.DepositAmount:F2}. Company added R{companyCredit:F2}. New balance: R{balance:F2}."
+                        });
                     }
-                    catch (Exception ex)
-                    {
-                        transaction.Rollback();
-                        return Json(new { success = false, message = $"Error processing deposit: {ex.Message}" });
-                    }
+                }
+                catch (Exception ex)
+                {
+                    return Json(new { success = false, message = $"Error processing deposit: {ex.Message}" });
                 }
             }
         }
 
-      
         [HttpGet]
         public IActionResult DepositSuccess(decimal depositAmount, decimal companyCredit, decimal newBalance)
         {
@@ -1007,7 +763,6 @@ _DEPS_                    FROM Shops s
         [HttpPost]
         [Route("Checkout/{shopId}")]
         public async Task<IActionResult> Checkout(int shopId, string[] cartItems)
-        
         {
             if (cartItems == null || !cartItems.Any())
             {
@@ -1059,48 +814,48 @@ _DEPS_                    FROM Shops s
                 await connection.OpenAsync();
 
                 // Get shop name
-                using (SqlCommand cmd = new SqlCommand("SELECT Shop_Name FROM Shops WHERE Shop_ID = @ShopId AND IsActive = 1", connection))
+                using (SqlCommand cmd = new SqlCommand("sp_GetShopName", connection))
                 {
-                    cmd.Parameters.Add("@ShopId", SqlDbType.Int).Value = shopId;
-                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
-                    {
-                        if (await reader.ReadAsync())
-                        {
-                            model.Shop_Name = reader.GetString(0);
-                        }
-                        else
-                        {
-                            return NotFound("Shop not found or inactive.");
-                        }
-                    }
+                    cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@ShopId", shopId);
+                    var shopNameParam = new SqlParameter("@ShopName", System.Data.SqlDbType.NVarChar, 100) { Direction = System.Data.ParameterDirection.Output };
+                    cmd.Parameters.Add(shopNameParam);
+
+                    await cmd.ExecuteNonQueryAsync();
+
+                  
+                    model.Shop_Name = shopNameParam.Value?.ToString();
                 }
 
                 // Get employee information
                 string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                using (SqlCommand cmd = new SqlCommand(
-                   "SELECT First_Name, Surname, Balance, ISNULL(Delivery_Address, Street_address + ', ' + Postal_Code) AS DeliveryAddress FROM AspNetUsers WHERE Id = @UserId", connection))
+                using (SqlCommand cmd = new SqlCommand("sp_GetEmployeeCheckoutInfo", connection))
                 {
-                    cmd.Parameters.Add("@UserId", SqlDbType.NVarChar).Value = userId;
-                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
-                    {
-                        if (await reader.ReadAsync())
-                        {
-                            model.EmployeeName = reader.GetString(0);
-                            model.EmployeeSurname = reader.GetString(1);
-                            model.EmployeeBalance = reader.GetDecimal(2);
-                            model.DeliveryAddress = reader.IsDBNull(3) ? "No address provided" : reader.GetString(3);
+                    cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@UserId", userId);
 
-                            // Check if balance is sufficient
-                            if (model.EmployeeBalance < model.TotalAmount)
-                            {
-                                TempData["ErrorMessage"] = "Insufficient balance. Please add funds to your account.";
-                                return RedirectToAction("Menu", "Restaurants", new { id = shopId });
-                            }
-                        }
-                        else
-                        {
-                            return NotFound("Employee not found.");
-                        }
+                    // Output parameters
+                    var firstNameParam = new SqlParameter("@FirstName", System.Data.SqlDbType.NVarChar, 50) { Direction = System.Data.ParameterDirection.Output };
+                    var surnameParam = new SqlParameter("@Surname", System.Data.SqlDbType.NVarChar, 50) { Direction = System.Data.ParameterDirection.Output };
+                    var balanceParam = new SqlParameter("@Balance", System.Data.SqlDbType.Decimal) { Direction = System.Data.ParameterDirection.Output, Precision = 18, Scale = 2 };
+                    var deliveryAddressParam = new SqlParameter("@DeliveryAddress", System.Data.SqlDbType.NVarChar, -1) { Direction = System.Data.ParameterDirection.Output };
+
+                    cmd.Parameters.AddRange(new[] { firstNameParam, surnameParam, balanceParam, deliveryAddressParam });
+
+                    await cmd.ExecuteNonQueryAsync();
+
+                   
+
+                    model.EmployeeName = firstNameParam.Value?.ToString();
+                    model.EmployeeSurname = surnameParam.Value?.ToString();
+                    model.EmployeeBalance = balanceParam.Value == DBNull.Value ? 0 : (decimal)balanceParam.Value;
+                    model.DeliveryAddress = deliveryAddressParam.Value == DBNull.Value ? "No address provided" : deliveryAddressParam.Value.ToString();
+
+                    // Check if balance is sufficient
+                    if (model.EmployeeBalance < model.TotalAmount)
+                    {
+                        TempData["ErrorMessage"] = "Insufficient balance. Please add funds to your account.";
+                        return RedirectToAction("Menu", "Restaurants", new { id = shopId });
                     }
                 }
             }
@@ -1109,9 +864,8 @@ _DEPS_                    FROM Shops s
         }
 
 
-        [HttpPost]
-        [Route("PlaceOrder/{shopId}")]
-        public async Task<IActionResult> PlaceOrder(int shopId, CheckoutViewModel model)
+     
+        public async Task<IActionResult> PlaceOrder1(int shopId, CheckoutViewModel model)
         {
             string connectionString = _config.GetConnectionString("DefaultConnection");
             var identityUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -1341,7 +1095,225 @@ _DEPS_                    FROM Shops s
             }
         }
 
+        [HttpPost]
+        [Route("PlaceOrder/{shopId}")]
+        public async Task<IActionResult> PlaceOrder(int shopId, CheckoutViewModel model)
+        {
+            string connectionString = _config.GetConnectionString("DefaultConnection");
+            var identityUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
+            if (string.IsNullOrEmpty(identityUserId))
+            {
+                TempData["ErrorMessage"] = "User not authenticated.";
+                return RedirectToAction("Login", "Account");
+            }
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                using (var transaction = connection.BeginTransaction())
+                {
+                    try
+                    {
+                        // Get Employee ID
+                        int employeeId;
+                        using (SqlCommand cmd = new SqlCommand("sp_GetEmployeeId", connection, transaction))
+                        {
+                            cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                            cmd.Parameters.AddWithValue("@UserId", identityUserId);
+                            var employeeIdParam = new SqlParameter("@EmployeeId", System.Data.SqlDbType.Int) { Direction = System.Data.ParameterDirection.Output };
+                            cmd.Parameters.Add(employeeIdParam);
+
+                            await cmd.ExecuteNonQueryAsync();
+                           
+                            employeeId = (int)employeeIdParam.Value;
+                        }
+
+                        // Check employee balance
+                        decimal balance;
+                        using (SqlCommand cmd = new SqlCommand("sp_GetEmployeeBalance", connection, transaction))
+                        {
+                            cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                            cmd.Parameters.AddWithValue("@EmployeeId", employeeId);
+                            var balanceParam = new SqlParameter("@Balance", System.Data.SqlDbType.Decimal) { Direction = System.Data.ParameterDirection.Output, Precision = 18, Scale = 2 };
+                            cmd.Parameters.Add(balanceParam);
+
+                            await cmd.ExecuteNonQueryAsync();
+                            balance = balanceParam.Value == DBNull.Value ? 0 : (decimal)balanceParam.Value;
+                        }
+
+                        decimal totalAmount = model.Items.Sum(i => i.Price * i.Quantity);
+                        if (balance < totalAmount)
+                        {
+                            transaction.Rollback();
+                            TempData["ErrorMessage"] = "Insufficient balance to place this order.";
+                            return RedirectToAction("Checkout", new { shopId = shopId });
+                        }
+
+                        // Get shop name
+                        string shopName;
+                        using (SqlCommand cmd = new SqlCommand("sp_GetShopNameForOrder", connection, transaction))
+                        {
+                            cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                            cmd.Parameters.AddWithValue("@ShopId", shopId);
+                            var shopNameParam = new SqlParameter("@ShopName", System.Data.SqlDbType.NVarChar, 100) { Direction = System.Data.ParameterDirection.Output };
+                            cmd.Parameters.Add(shopNameParam);
+
+                            await cmd.ExecuteNonQueryAsync();
+                           
+                            shopName = shopNameParam.Value.ToString();
+                        }
+
+                        // Generate Order_Number
+                        string orderNumber;
+                        using (SqlCommand cmd = new SqlCommand("sp_GetDailyOrderCount", connection, transaction))
+                        {
+                            cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                            cmd.Parameters.AddWithValue("@ShopId", shopId);
+                            var orderCountParam = new SqlParameter("@OrderCount", System.Data.SqlDbType.Int) { Direction = System.Data.ParameterDirection.Output };
+                            cmd.Parameters.Add(orderCountParam);
+
+                            await cmd.ExecuteNonQueryAsync();
+                            int orderCount = (int)orderCountParam.Value;
+                            string shopPrefix = shopName.ToUpper().Replace(" ", "");
+                            string datePart = DateTime.Now.ToString("yyyyMMdd");
+                            orderNumber = $"{shopPrefix}-{datePart}-{orderCount + 1:D3}";
+                        }
+
+                        // Auto-assign driver
+                        int driverId;
+                        string driverName;
+                        using (SqlCommand cmd = new SqlCommand("sp_GetAvailableDriver", connection, transaction))
+                        {
+                            cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                            var driverIdParam = new SqlParameter("@DriverId", System.Data.SqlDbType.Int) { Direction = System.Data.ParameterDirection.Output };
+                            var driverNameParam = new SqlParameter("@DriverName", System.Data.SqlDbType.NVarChar, 100) { Direction = System.Data.ParameterDirection.Output };
+                            cmd.Parameters.AddRange(new[] { driverIdParam, driverNameParam });
+
+                            await cmd.ExecuteNonQueryAsync();
+                            
+                            driverId = (int)driverIdParam.Value;
+                            driverName = driverNameParam.Value.ToString();
+                        }
+
+                        // Update driver status
+                        using (SqlCommand cmd = new SqlCommand("sp_UpdateDriverStatus", connection, transaction))
+                        {
+                            cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                            cmd.Parameters.AddWithValue("@DriverId", driverId);
+                            await cmd.ExecuteNonQueryAsync();
+                        }
+
+                        // Generate OTP
+                        string otp = new Random().Next(100000, 999999).ToString();
+
+                        // Create Order
+                        int orderId;
+                        using (SqlCommand cmd = new SqlCommand("sp_CreateOrder", connection, transaction))
+                        {
+                            cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                            cmd.Parameters.AddWithValue("@EmployeeId", employeeId);
+                            cmd.Parameters.AddWithValue("@ShopId", shopId);
+                            cmd.Parameters.AddWithValue("@OrderDate", DateTime.Now);
+                            cmd.Parameters.AddWithValue("@TotalAmount", totalAmount);
+                            cmd.Parameters.AddWithValue("@OrderNumber", orderNumber);
+                            cmd.Parameters.AddWithValue("@DeliveryAddress", model.DeliveryAddress ?? "No address provided");
+                            cmd.Parameters.AddWithValue("@DriverId", driverId);
+                            cmd.Parameters.AddWithValue("@DriverName", driverName);
+                            cmd.Parameters.AddWithValue("@OTP", otp);
+                            var orderIdParam = new SqlParameter("@OrderId", System.Data.SqlDbType.Int) { Direction = System.Data.ParameterDirection.Output };
+                            cmd.Parameters.Add(orderIdParam);
+
+                            await cmd.ExecuteNonQueryAsync();
+                           
+                            orderId = (int)orderIdParam.Value;
+                        }
+
+                        // Create OrderItems
+                        foreach (var item in model.Items)
+                        {
+                            using (SqlCommand cmd = new SqlCommand("sp_CreateOrderItem", connection, transaction))
+                            {
+                                cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                                cmd.Parameters.AddWithValue("@OrderId", orderId);
+                                cmd.Parameters.AddWithValue("@MenuItemId", item.MenuItemId);
+                                cmd.Parameters.AddWithValue("@Quantity", item.Quantity);
+                                cmd.Parameters.AddWithValue("@UnitPrice", item.Price);
+
+                                await cmd.ExecuteNonQueryAsync();
+                               
+                            }
+                        }
+
+                        // Update employee balance
+                        using (SqlCommand cmd = new SqlCommand("sp_UpdateEmployeeBalance", connection, transaction))
+                        {
+                            cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                            cmd.Parameters.AddWithValue("@EmployeeId", employeeId);
+                            cmd.Parameters.AddWithValue("@TotalAmount", totalAmount);
+
+                            await cmd.ExecuteNonQueryAsync();
+                           
+                        }
+
+                        // Get employee contact info
+                        string employeeEmail, employeeName, employeeSurname;
+                        using (SqlCommand cmd = new SqlCommand("sp_GetEmployeeContactInfo", connection, transaction))
+                        {
+                            cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                            cmd.Parameters.AddWithValue("@EmployeeId", employeeId);
+                            var emailParam = new SqlParameter("@Email", System.Data.SqlDbType.NVarChar, 256) { Direction = System.Data.ParameterDirection.Output };
+                            var firstNameParam = new SqlParameter("@FirstName", System.Data.SqlDbType.NVarChar, 50) { Direction = System.Data.ParameterDirection.Output };
+                            var surnameParam = new SqlParameter("@Surname", System.Data.SqlDbType.NVarChar, 50) { Direction = System.Data.ParameterDirection.Output };
+                            cmd.Parameters.AddRange(new[] { emailParam, firstNameParam, surnameParam });
+
+                            await cmd.ExecuteNonQueryAsync();
+                           
+                            employeeEmail = emailParam.Value.ToString();
+                            employeeName = firstNameParam.Value.ToString();
+                            employeeSurname = surnameParam.Value.ToString();
+                        }
+
+                        transaction.Commit();
+
+                        // Schedule background job for status update and email
+                        var estimatedDelivery = DateTime.Now.AddMinutes(5);
+                        var onTheWayTime = estimatedDelivery.AddMinutes(-1);
+                        _bck.Schedule(
+                            () => UpdateOrderStatusAndNotify(orderId, employeeEmail, employeeName, employeeSurname, orderNumber, shopName, driverName, model.DeliveryAddress, otp),
+                            onTheWayTime);
+
+                        // Send initial order confirmation email with OTP
+                        await SendOrderConfirmationEmail(employeeEmail, employeeName, employeeSurname, orderNumber, shopName, model.Items, totalAmount, estimatedDelivery, model.DeliveryAddress, driverName, otp);
+
+                        // Clear cart
+                        TempData["ClearCart"] = true;
+                        TempData["SuccessMessage"] = "Order placed successfully!";
+
+                        // Redirect to Receipt action
+                        return RedirectToAction("Receipt", new
+                        {
+                            orderId,
+                            orderNumber,
+                            shopName,
+                            employeeName,
+                            employeeSurname,
+                            totalAmount,
+                            estimatedDelivery = estimatedDelivery.ToString("yyyy-MM-dd HH:mm:ss"),
+                            deliveryAddress = model.DeliveryAddress,
+                            driverName,
+                            otp
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        TempData["ErrorMessage"] = $"Error placing order: {ex.Message}";
+                        return RedirectToAction("Checkout", new { shopId = shopId });
+                    }
+                }
+            }
+        }
         public async Task UpdateOrderStatusAndNotify(int orderId, string employeeEmail, string employeeName, string employeeSurname, string orderNumber, string shopName, string driverName, string deliveryAddress, string otp)
         {
             string connectionString = _config.GetConnectionString("DefaultConnection");
