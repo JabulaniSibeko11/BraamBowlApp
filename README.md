@@ -87,3 +87,10 @@ This project is a web application developed using ASP.NET Core to manage an empl
 ## Troubleshooting
 - **Database Issues**: Ensure LocalDB is running and the connection string is correct. Re-run migrations if needed.
 - **Port
+-  "Smtp": {
+   "Host": "168.89.180.38",
+   "Port": 25,
+   "EnableSsl": false,
+   "Username": "braamBowl@joburg.org.za",
+   "Password": "BraamBowl"
+ }, Are hosted local which is internal server
