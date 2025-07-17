@@ -45,7 +45,10 @@ This project is a web application developed using ASP.NET Core to manage an empl
 5. **Access the Application**:
    Open a web browser and navigate to `https://localhost:5001` (or the port specified in the console output).
 
-
+## Registration Of Employee
+- **Employee Account Management**:
+- I used Sap Number and Work Email to register- When you test the App please register with the Work Email(e.g JabulaniSib@joburg.org.za)
+- So that you can be able to get the emails of Welcome Email that you can use to login. but the app automatically send you to landing page 
 
 ## Features
 - **Employee Account Management**:
@@ -53,7 +56,7 @@ This project is a web application developed using ASP.NET Core to manage an empl
 - **Deposits and Bonuses**:
   - Employees can deposit funds, with a R500 bonus applied for every R250 deposited in a given month.
   - Tracks last deposit month to reset bonus calculations.
-  - To complete the Yoco Payment the card number is 4242 4242 4242 4242 and you can use any month/yyyy and 123 security number
+  - To complete the Yoco Payment the card number is **4242 4242 4242 4242**and you can use any **month/yyyy** and **123** security number
     
 - **Restaurant and Menu Management**:
   - Admin CRUD operations for restaurants and their menu items.
