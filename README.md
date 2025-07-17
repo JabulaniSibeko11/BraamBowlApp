@@ -12,46 +12,64 @@ This project is a web application developed using ASP.NET Core to manage an empl
 ## Setup Instructions
 1. **Clone the Repository**:
    ```bash
-   git clone <repository-url>
+   git clone [<repository-url>](https://github.com/JabulaniSibeko11/BraamBowlApp)
    cd EmployeeCafeteriaSystem
    ```
 
 2. **Restore Dependencies**:
    Run the following command to restore NuGet packages:
-   ```bash
-   dotnet restore
-   ```
+   Id                                  Versions                                 ProjectName                          
+--                                  --------                                 -----------                          
+Hangfire.SqlServer                  {1.8.20}                                 BraamBowlApp                         
+Microsoft.VisualStudio.Web.CodeG... {8.0.7}                                  BraamBowlApp                         
+Hangfire                            {1.8.20}                                 BraamBowlApp                         
+Microsoft.EntityFrameworkCore.Sq... {8.0.11}                                 BraamBowlApp                         
+Microsoft.AspNetCore.Identity.En... {8.0.11}                                 BraamBowlApp                         
+Microsoft.EntityFrameworkCore.Sq... {8.0.11}                                 BraamBowlApp                         
+Hangfire.Core                       {1.8.20}                                 BraamBowlApp                         
+Microsoft.AspNetCore.Diagnostics... {8.0.2}                                  BraamBowlApp                         
+Microsoft.AspNetCore.Identity.UI    {8.0.11}                                 BraamBowlApp                         
+Microsoft.EntityFrameworkCore.Tools {8.0.11}                                 BraamBowlApp                         
 
-3. **Configure Database**:
+ 
+
+4. **Configure Database**:
    - Ensure SQL Server LocalDB is installed.
    - Update the connection string in `appsettings.json` if necessary:
-     ```json
-     "ConnectionStrings": {
-       "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=CafeteriaDb;Trusted_Connection=True;MultipleActiveResultSets=true"
-     }
-     ```
-   - Apply Entity Framework Core migrations to create the database:
-     ```bash
-     dotnet ef database update
-     ```
+    {
+  "Smtp": {
+    "Host": "168.89.180.38",
+    "Port": 25,
+    "EnableSsl": false,
+    "Username": "braamBowl@joburg.org.za",
+    "Password": "BraamBowl"
+  },
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=506E7Y\\MSSQLSERVER02; Database=BraamBowlOrderDatabase;Trusted_Connection=True;TrustServerCertificate=True"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*"
+}
+**Please not that If you going to run it local dont change SMTP because are hosted local just use the work email**
 
-4. **Run the Application**:
+5. **Run the Application**:
    Start the application using:
-   ```bash
-   dotnet run
-   ```
+   You can run the app using IIS Express
    Alternatively, open the solution in Visual Studio and press `F5` to build and run.
 
-5. **Access the Application**:
-   Open a web browser and navigate to `https://localhost:5001` (or the port specified in the console output).
 
-## Registration Of Employee
-- **Employee Account Management**:
-- I used Sap Number and Work Email to register- When you test the App please register with the Work Email(e.g JabulaniSib@joburg.org.za)
-- So that you can be able to get the emails of Welcome Email that you can use to login. but the app automatically send you to landing page 
+
+
 
 ## Features
 - **Employee Account Management**:
+  - I used Sap Number and Work Email to register- When you test the App please register with the Work Email(e.g JabulaniSib@joburg.org.za)
+   - So that you can be able to get the emails of Welcome Email that you can use to login. but the app automatically send you to landing page 
   - Create, view, and manage employee accounts with details like name, employee number, and balance.
 - **Deposits and Bonuses**:
   - Employees can deposit funds, with a R500 bonus applied for every R250 deposited in a given month.
@@ -60,6 +78,7 @@ This project is a web application developed using ASP.NET Core to manage an empl
     
 - **Restaurant and Menu Management**:
   - Admin CRUD operations for restaurants and their menu items.
+  - On the navigation bar you can also  use the restaurants tab to place an order
   - Displays restaurant details and associated menus.
 - **Ordering System**:
   - Employees can browse restaurants, view menus, select items, and place orders.
